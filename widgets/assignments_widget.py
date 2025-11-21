@@ -34,11 +34,15 @@ class AssignmentDialog(QDialog):
         # Оборудование
         self.equipment_combo = QComboBox()
         equipment_list = self.db.get_all_equipment()
-        for eq in equipment_list:
-            self.equipment_combo.addItem(
-                f"{eq['inventory_number']} - {eq['name']}",
-                eq['id']
-            )
+        if not equipment_list:
+            QMessageBox.warning(self, "Предупреждение", 
+                              "Нет доступного оборудования. Сначала добавьте оборудование в реестр.")
+        else:
+            for eq in equipment_list:
+                self.equipment_combo.addItem(
+                    f"{eq['inventory_number']} - {eq['name']}",
+                    eq['id']
+                )
         form.addRow("Оборудование *:", self.equipment_combo)
         
         # Назначено кому
@@ -232,11 +236,21 @@ class AssignmentsWidget(QWidget):
     
     def add_assignment(self):
         """Добавить новое назначение"""
+        equipment_list = self.db.get_all_equipment()
+        if not equipment_list:
+            QMessageBox.warning(self, "Ошибка", 
+                              "Нет доступного оборудования. Сначала добавьте оборудование в реестр.")
+            return
+        
         dialog = AssignmentDialog(self, self.db)
         if dialog.exec():
             data = dialog.get_data()
             if not data['assigned_to']:
                 QMessageBox.warning(self, "Ошибка", "Заполните поле 'Назначено кому'")
+                return
+            
+            if not data['equipment_id']:
+                QMessageBox.warning(self, "Ошибка", "Выберите оборудование")
                 return
             
             try:

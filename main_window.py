@@ -10,6 +10,7 @@ from widgets.equipment_widget import EquipmentWidget
 from widgets.maintenance_widget import MaintenanceWidget
 from widgets.assignments_widget import AssignmentsWidget
 from widgets.reports_widget import ReportsWidget
+from widgets.dashboard_widget import DashboardWidget
 
 
 class MainWindow(QMainWindow):
@@ -25,6 +26,55 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("EquipmentTracker - Учет оборудования")
         self.setGeometry(100, 100, 1200, 800)
         
+        # Применяем стили
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #f5f5f5;
+            }
+            QTabWidget::pane {
+                border: 1px solid #ddd;
+                background-color: white;
+            }
+            QTabBar::tab {
+                background-color: #e0e0e0;
+                padding: 8px 16px;
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                background-color: white;
+                border-bottom: 2px solid #2196F3;
+            }
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+            QPushButton:pressed {
+                background-color: #0D47A1;
+            }
+            QTableWidget {
+                gridline-color: #e0e0e0;
+                background-color: white;
+            }
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #ddd;
+                border-radius: 5px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """)
+        
         # Центральный виджет
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -36,6 +86,10 @@ class MainWindow(QMainWindow):
         # Создаем вкладки
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
+        
+        # Вкладка "Дашборд"
+        self.dashboard_widget = DashboardWidget(self.db)
+        self.tabs.addTab(self.dashboard_widget, "📊 Дашборд")
         
         # Вкладка "Оборудование"
         self.equipment_widget = EquipmentWidget(self.db)
@@ -62,6 +116,7 @@ class MainWindow(QMainWindow):
     
     def on_equipment_updated(self):
         """Обработчик обновления оборудования"""
+        self.dashboard_widget.refresh_data()
         self.maintenance_widget.refresh_equipment_list()
         self.assignments_widget.refresh_equipment_list()
         self.reports_widget.refresh_data()
@@ -69,6 +124,7 @@ class MainWindow(QMainWindow):
     
     def on_assignment_updated(self):
         """Обработчик обновления назначений"""
+        self.dashboard_widget.refresh_data()
         self.equipment_widget.refresh_data()
         self.reports_widget.refresh_data()
         self.statusBar().showMessage("Данные обновлены", 2000)

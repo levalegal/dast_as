@@ -36,11 +36,15 @@ class MaintenanceDialog(QDialog):
         # Оборудование
         self.equipment_combo = QComboBox()
         equipment_list = self.db.get_all_equipment()
-        for eq in equipment_list:
-            self.equipment_combo.addItem(
-                f"{eq['inventory_number']} - {eq['name']}",
-                eq['id']
-            )
+        if not equipment_list:
+            QMessageBox.warning(self, "Предупреждение", 
+                              "Нет доступного оборудования. Сначала добавьте оборудование в реестр.")
+        else:
+            for eq in equipment_list:
+                self.equipment_combo.addItem(
+                    f"{eq['inventory_number']} - {eq['name']}",
+                    eq['id']
+                )
         form.addRow("Оборудование *:", self.equipment_combo)
         
         # Дата обслуживания
@@ -253,11 +257,21 @@ class MaintenanceWidget(QWidget):
     
     def add_maintenance(self):
         """Добавить новое обслуживание"""
+        equipment_list = self.db.get_all_equipment()
+        if not equipment_list:
+            QMessageBox.warning(self, "Ошибка", 
+                              "Нет доступного оборудования. Сначала добавьте оборудование в реестр.")
+            return
+        
         dialog = MaintenanceDialog(self, self.db)
         if dialog.exec():
             data = dialog.get_data()
             if not data['type']:
                 QMessageBox.warning(self, "Ошибка", "Заполните тип обслуживания")
+                return
+            
+            if not data['equipment_id']:
+                QMessageBox.warning(self, "Ошибка", "Выберите оборудование")
                 return
             
             try:

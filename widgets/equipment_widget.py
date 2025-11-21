@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt, QDate, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
 from decimal import Decimal
 from datetime import datetime
+from utils.export import ExportManager
 
 
 class EquipmentDialog(QDialog):
@@ -198,6 +199,10 @@ class EquipmentWidget(QWidget):
         self.refresh_btn.clicked.connect(self.refresh_data)
         buttons_layout.addWidget(self.refresh_btn)
         
+        self.export_btn = QPushButton("Экспорт в CSV")
+        self.export_btn.clicked.connect(self.export_data)
+        buttons_layout.addWidget(self.export_btn)
+        
         buttons_layout.addStretch()
         layout.addLayout(buttons_layout)
         
@@ -322,3 +327,16 @@ class EquipmentWidget(QWidget):
                 QMessageBox.information(self, "Успех", "Оборудование удалено")
             except Exception as e:
                 QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
+    
+    def export_data(self):
+        """Экспорт данных оборудования в CSV"""
+        if self.table.rowCount() == 0:
+            QMessageBox.warning(self, "Предупреждение", "Нет данных для экспорта")
+            return
+        
+        filename = ExportManager.get_export_filename(self, "equipment")
+        if filename:
+            if ExportManager.export_table_to_csv(self.table, filename):
+                QMessageBox.information(self, "Успех", f"Данные экспортированы в {filename}")
+            else:
+                QMessageBox.warning(self, "Ошибка", "Не удалось экспортировать данные")

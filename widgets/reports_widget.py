@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
 from PyQt6.QtCore import Qt, QDate
 from database import Database
 from decimal import Decimal
+from utils.export import ExportManager
 
 
 class ReportsWidget(QWidget):
@@ -36,6 +37,11 @@ class ReportsWidget(QWidget):
         self.depreciation_refresh_btn = QPushButton("Обновить отчет")
         self.depreciation_refresh_btn.clicked.connect(self.refresh_depreciation)
         buttons_layout.addWidget(self.depreciation_refresh_btn)
+        
+        self.depreciation_export_btn = QPushButton("Экспорт в CSV")
+        self.depreciation_export_btn.clicked.connect(self.export_depreciation)
+        buttons_layout.addWidget(self.depreciation_export_btn)
+        
         buttons_layout.addStretch()
         depreciation_layout.addLayout(buttons_layout)
         
@@ -75,6 +81,10 @@ class ReportsWidget(QWidget):
         self.cost_refresh_btn = QPushButton("Обновить отчет")
         self.cost_refresh_btn.clicked.connect(self.refresh_maintenance_cost)
         filter_layout.addWidget(self.cost_refresh_btn)
+        
+        self.cost_export_btn = QPushButton("Экспорт в CSV")
+        self.cost_export_btn.clicked.connect(self.export_maintenance_cost)
+        filter_layout.addWidget(self.cost_export_btn)
         
         filter_group.setLayout(filter_layout)
         maintenance_cost_layout.addWidget(filter_group)
@@ -119,6 +129,10 @@ class ReportsWidget(QWidget):
         self.maintenance_report_refresh_btn = QPushButton("Сформировать отчет")
         self.maintenance_report_refresh_btn.clicked.connect(self.refresh_maintenance_report)
         report_filter_layout.addWidget(self.maintenance_report_refresh_btn)
+        
+        self.maintenance_report_export_btn = QPushButton("Экспорт в CSV")
+        self.maintenance_report_export_btn.clicked.connect(self.export_maintenance_report)
+        report_filter_layout.addWidget(self.maintenance_report_export_btn)
         
         report_filter_group.setLayout(report_filter_layout)
         maintenance_report_layout.addWidget(report_filter_group)
@@ -209,3 +223,30 @@ class ReportsWidget(QWidget):
             self.maintenance_report_table.setItem(row, 4, QTableWidgetItem(str(cost)))
             description = item.get('description', '') or ''
             self.maintenance_report_table.setItem(row, 5, QTableWidgetItem(description[:50] + '...' if len(description) > 50 else description))
+    
+    def export_depreciation(self):
+        """Экспорт отчета по амортизации в CSV"""
+        filename = ExportManager.get_export_filename(self, "depreciation_report")
+        if filename:
+            if ExportManager.export_table_to_csv(self.depreciation_table, filename):
+                QMessageBox.information(self, "Успех", f"Отчет экспортирован в {filename}")
+            else:
+                QMessageBox.warning(self, "Ошибка", "Не удалось экспортировать отчет")
+    
+    def export_maintenance_cost(self):
+        """Экспорт отчета по стоимости содержания в CSV"""
+        filename = ExportManager.get_export_filename(self, "maintenance_cost_report")
+        if filename:
+            if ExportManager.export_table_to_csv(self.maintenance_cost_table, filename):
+                QMessageBox.information(self, "Успех", f"Отчет экспортирован в {filename}")
+            else:
+                QMessageBox.warning(self, "Ошибка", "Не удалось экспортировать отчет")
+    
+    def export_maintenance_report(self):
+        """Экспорт отчета по ТО в CSV"""
+        filename = ExportManager.get_export_filename(self, "maintenance_report")
+        if filename:
+            if ExportManager.export_table_to_csv(self.maintenance_report_table, filename):
+                QMessageBox.information(self, "Успех", f"Отчет экспортирован в {filename}")
+            else:
+                QMessageBox.warning(self, "Ошибка", "Не удалось экспортировать отчет")
