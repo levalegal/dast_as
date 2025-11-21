@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QMessageBox, QHeaderView, QGroupBox)
 from PyQt6.QtCore import Qt, QDate, pyqtSignal
 from database import Database
+from utils.logger import app_logger
 
 
 class AssignmentDialog(QDialog):
@@ -262,10 +263,17 @@ class AssignmentsWidget(QWidget):
                 return
             
             try:
-                self.db.add_assignment(**data)
+                assignment_id = self.db.add_assignment(**data)
+                app_logger.log_assignment_action(
+                    "Добавлено",
+                    assignment_id=assignment_id,
+                    equipment_id=data['equipment_id'],
+                    details=f"Назначено: {data['assigned_to']}, Отдел: {data.get('department', 'N/A')}"
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Назначение добавлено")
             except Exception as e:
+                app_logger.log_error("Добавление назначения", str(e))
                 QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
     
     def edit_assignment(self):
@@ -291,9 +299,15 @@ class AssignmentsWidget(QWidget):
             
             try:
                 self.db.update_assignment(assignment_id, **data)
+                app_logger.log_assignment_action(
+                    "Обновлено",
+                    assignment_id=assignment_id,
+                    equipment_id=data.get('equipment_id')
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Назначение обновлено")
             except Exception as e:
+                app_logger.log_error("Обновление назначения", str(e), f"ID: {assignment_id}")
                 QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
     
     def delete_assignment(self):
@@ -319,9 +333,14 @@ class AssignmentsWidget(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 self.db.delete_assignment(assignment_id)
+                app_logger.log_assignment_action(
+                    "Удалено",
+                    assignment_id=assignment_id
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Назначение удалено")
             except Exception as e:
+                app_logger.log_error("Удаление назначения", str(e), f"ID: {assignment_id}")
                 QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
     
     def view_history(self):

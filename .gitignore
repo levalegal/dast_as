@@ -44,3 +44,5 @@ Thumbs.db
 # Project specific
 equipment.db
 backups/
+*.log
+logs/

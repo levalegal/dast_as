@@ -3,7 +3,7 @@
 """
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QTableWidgetItem, QPushButton, QLabel, QGroupBox,
-                             QDateEdit, QHeaderView, QMessageBox, QSpinBox)
+                             QDateEdit, QHeaderView, QMessageBox, QSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, QDate
 from database import Database
 from datetime import datetime, timedelta
@@ -26,18 +26,42 @@ class MaintenanceSchedulerWidget(QWidget):
         
         # Группа настроек
         settings_group = QGroupBox("Настройки напоминаний")
-        settings_layout = QHBoxLayout()
+        settings_layout = QVBoxLayout()
         
-        settings_layout.addWidget(QLabel("Показывать обслуживания за:"))
+        # Первая строка настроек
+        row1 = QHBoxLayout()
+        row1.addWidget(QLabel("Показывать обслуживания за:"))
         self.days_spinbox = QSpinBox()
         self.days_spinbox.setMinimum(1)
         self.days_spinbox.setMaximum(365)
         self.days_spinbox.setValue(30)
         self.days_spinbox.setSuffix(" дней")
         self.days_spinbox.valueChanged.connect(self.refresh_data)
-        settings_layout.addWidget(self.days_spinbox)
+        row1.addWidget(self.days_spinbox)
         
-        settings_layout.addStretch()
+        row1.addWidget(QLabel("Интервал ТО по умолчанию:"))
+        self.interval_spinbox = QSpinBox()
+        self.interval_spinbox.setMinimum(1)
+        self.interval_spinbox.setMaximum(365)
+        self.interval_spinbox.setValue(90)
+        self.interval_spinbox.setSuffix(" дней")
+        self.interval_spinbox.valueChanged.connect(self.refresh_data)
+        row1.addWidget(self.interval_spinbox)
+        
+        row1.addStretch()
+        settings_layout.addLayout(row1)
+        
+        # Вторая строка - фильтр по категории
+        row2 = QHBoxLayout()
+        row2.addWidget(QLabel("Категория:"))
+        self.category_filter = QComboBox()
+        self.category_filter.addItem("Все категории", None)
+        self.category_filter.currentIndexChanged.connect(self.refresh_data)
+        row2.addWidget(self.category_filter)
+        
+        row2.addStretch()
+        settings_layout.addLayout(row2)
+        
         settings_group.setLayout(settings_layout)
         layout.addWidget(settings_group)
         
@@ -66,13 +90,46 @@ class MaintenanceSchedulerWidget(QWidget):
     def refresh_data(self):
         """Обновить данные о предстоящем обслуживании"""
         days_ahead = self.days_spinbox.value()
+        default_interval = self.interval_spinbox.value()
         today = datetime.now().date()
         end_date = today + timedelta(days=days_ahead)
         
+        # Обновляем список категорий
         equipment_list = self.db.get_all_equipment()
+        categories = set()
+        for eq in equipment_list:
+            if eq.get('category'):
+                categories.add(eq['category'])
+        
+        current_category = self.category_filter.currentData()
+        self.category_filter.clear()
+        self.category_filter.addItem("Все категории", None)
+        for cat in sorted(categories):
+            self.category_filter.addItem(cat, cat)
+        
+        # Восстанавливаем выбор
+        if current_category:
+            for i in range(self.category_filter.count()):
+                if self.category_filter.itemData(i) == current_category:
+                    self.category_filter.setCurrentIndex(i)
+                    break
+        
+        selected_category = self.category_filter.currentData()
         upcoming_maintenance = []
         
+        # Интервалы ТО по категориям (можно расширить)
+        category_intervals = {
+            'Компьютерная техника': 180,
+            'Офисная мебель': 365,
+            'Оргтехника': 90,
+            'Производственное оборудование': 30,
+            'Транспорт': 60
+        }
+        
         for eq in equipment_list:
+            # Фильтр по категории
+            if selected_category and eq.get('category') != selected_category:
+                continue
             # Получаем последнее обслуживание
             maintenance_list = self.db.get_maintenance_by_equipment(eq['id'])
             
@@ -85,8 +142,12 @@ class MaintenanceSchedulerWidget(QWidget):
                     last_date = datetime.strptime(last_date_str, '%Y-%m-%d').date()
                     days_since = (today - last_date).days
                     
-                    # Предполагаем, что следующее ТО через 90 дней (можно настроить)
-                    next_maintenance_date = last_date + timedelta(days=90)
+                    # Определяем интервал ТО для категории
+                    category = eq.get('category', '')
+                    interval = category_intervals.get(category, default_interval)
+                    
+                    # Следующее ТО через интервал после последнего
+                    next_maintenance_date = last_date + timedelta(days=interval)
                     
                     # Проверяем, попадает ли в диапазон
                     if next_maintenance_date <= end_date:
@@ -109,8 +170,12 @@ class MaintenanceSchedulerWidget(QWidget):
                         purchase_date = datetime.strptime(purchase_date_str, '%Y-%m-%d').date()
                         days_since = (today - purchase_date).days
                         
-                        # Если прошло больше 90 дней с покупки, требуется первое ТО
-                        if days_since >= 90:
+                        # Определяем интервал для категории
+                        category = eq.get('category', '')
+                        interval = category_intervals.get(category, default_interval)
+                        
+                        # Если прошло больше интервала с покупки, требуется первое ТО
+                        if days_since >= interval:
                             upcoming_maintenance.append({
                                 'equipment': eq,
                                 'last_maintenance': None,

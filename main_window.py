@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QAction
 from utils.backup import BackupManager
+from utils.logger import app_logger
 from database import Database
 from widgets.equipment_widget import EquipmentWidget
 from widgets.maintenance_widget import MaintenanceWidget
@@ -151,12 +152,14 @@ class MainWindow(QMainWindow):
         """Создать резервную копию базы данных"""
         try:
             backup_path = BackupManager.create_backup(self.db.db_path)
+            app_logger.log_backup_action("Создана", backup_path)
             QMessageBox.information(
                 self, "Успех",
                 f"Резервная копия создана:\n{backup_path}"
             )
             self.statusBar().showMessage(f"Резервная копия создана: {backup_path}", 5000)
         except Exception as e:
+            app_logger.log_error("Создание резервной копии", str(e))
             QMessageBox.warning(self, "Ошибка", f"Не удалось создать резервную копию:\n{str(e)}")
     
     def restore_backup(self):
@@ -178,6 +181,7 @@ class MainWindow(QMainWindow):
                     current_backup = BackupManager.create_backup(self.db.db_path)
                     
                     BackupManager.restore_backup(backup_path, self.db.db_path)
+                    app_logger.log_backup_action("Восстановлена", backup_path)
                     
                     QMessageBox.information(
                         self, "Успех",

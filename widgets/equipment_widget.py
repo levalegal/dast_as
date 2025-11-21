@@ -10,6 +10,8 @@ from PyQt6.QtGui import QDoubleValidator
 from decimal import Decimal
 from datetime import datetime
 from utils.export import ExportManager
+from utils.import_data import ImportManager
+from utils.logger import app_logger
 
 
 class EquipmentDialog(QDialog):
@@ -225,6 +227,10 @@ class EquipmentWidget(QWidget):
         self.export_btn.clicked.connect(self.export_data)
         buttons_layout.addWidget(self.export_btn)
         
+        self.import_btn = QPushButton("Импорт из CSV")
+        self.import_btn.clicked.connect(self.import_data)
+        buttons_layout.addWidget(self.import_btn)
+        
         buttons_layout.addStretch()
         layout.addLayout(buttons_layout)
         
@@ -364,10 +370,17 @@ class EquipmentWidget(QWidget):
                 return
             
             try:
-                self.db.add_equipment(**data)
+                equipment_id = self.db.add_equipment(**data)
+                app_logger.log_equipment_action(
+                    "Добавлено",
+                    equipment_id=equipment_id,
+                    inventory_number=data['inventory_number'],
+                    details=f"Категория: {data.get('category', 'N/A')}"
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Оборудование добавлено")
             except ValueError as e:
+                app_logger.log_error("Добавление оборудования", str(e))
                 QMessageBox.warning(self, "Ошибка", str(e))
     
     def edit_equipment(self):
@@ -392,9 +405,15 @@ class EquipmentWidget(QWidget):
                 
                 try:
                     self.db.update_equipment(equipment_id, **data)
+                    app_logger.log_equipment_action(
+                        "Обновлено",
+                        equipment_id=equipment_id,
+                        inventory_number=data.get('inventory_number', 'N/A')
+                    )
                     self.refresh_data()
                     QMessageBox.information(self, "Успех", "Оборудование обновлено")
                 except Exception as e:
+                    app_logger.log_error("Обновление оборудования", str(e), f"ID: {equipment_id}")
                     QMessageBox.warning(self, "Ошибка", f"Ошибка обновления: {str(e)}")
     
     def delete_equipment(self):
@@ -417,9 +436,15 @@ class EquipmentWidget(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 self.db.delete_equipment(equipment_id)
+                app_logger.log_equipment_action(
+                    "Удалено",
+                    equipment_id=equipment_id,
+                    inventory_number=inventory_number
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Оборудование удалено")
             except Exception as e:
+                app_logger.log_error("Удаление оборудования", str(e), f"ID: {equipment_id}")
                 QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
     
     def export_data(self):
@@ -431,6 +456,30 @@ class EquipmentWidget(QWidget):
         filename = ExportManager.get_export_filename(self, "equipment")
         if filename:
             if ExportManager.export_table_to_csv(self.table, filename):
+                app_logger.log_report_action("Экспорт оборудования", f"Файл: {filename}")
                 QMessageBox.information(self, "Успех", f"Данные экспортированы в {filename}")
             else:
+                app_logger.log_error("Экспорт оборудования", "Не удалось экспортировать данные")
                 QMessageBox.warning(self, "Ошибка", "Не удалось экспортировать данные")
+    
+    def import_data(self):
+        """Импорт данных оборудования из CSV"""
+        reply = QMessageBox.question(
+            self, 'Подтверждение',
+            'Импорт данных добавит новое оборудование в базу.\n'
+            'Оборудование с существующими инвентарными номерами будет пропущено.\n\n'
+            'Продолжить?',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            imported, errors, warnings = ImportManager.import_equipment_from_csv(self.db, self)
+            ImportManager.show_import_results(self, imported, errors, warnings)
+            
+            if imported > 0:
+                app_logger.log_equipment_action(
+                    "Импорт",
+                    details=f"Импортировано {imported} записей"
+                )
+                self.refresh_data()

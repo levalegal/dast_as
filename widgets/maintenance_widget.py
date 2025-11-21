@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QDoubleValidator
 from decimal import Decimal
 from database import Database
+from utils.logger import app_logger
 
 
 class MaintenanceDialog(QDialog):
@@ -279,10 +280,17 @@ class MaintenanceWidget(QWidget):
                 return
             
             try:
-                self.db.add_maintenance(**data)
+                maintenance_id = self.db.add_maintenance(**data)
+                app_logger.log_maintenance_action(
+                    "Добавлено",
+                    maintenance_id=maintenance_id,
+                    equipment_id=data['equipment_id'],
+                    details=f"Тип: {data['type']}, Дата: {data['maintenance_date']}"
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Обслуживание добавлено")
             except Exception as e:
+                app_logger.log_error("Добавление обслуживания", str(e))
                 QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
     
     def edit_maintenance(self):
@@ -308,9 +316,15 @@ class MaintenanceWidget(QWidget):
             
             try:
                 self.db.update_maintenance(maintenance_id, **data)
+                app_logger.log_maintenance_action(
+                    "Обновлено",
+                    maintenance_id=maintenance_id,
+                    equipment_id=data.get('equipment_id')
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Обслуживание обновлено")
             except Exception as e:
+                app_logger.log_error("Обновление обслуживания", str(e), f"ID: {maintenance_id}")
                 QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
     
     def delete_maintenance(self):
@@ -336,7 +350,12 @@ class MaintenanceWidget(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 self.db.delete_maintenance(maintenance_id)
+                app_logger.log_maintenance_action(
+                    "Удалено",
+                    maintenance_id=maintenance_id
+                )
                 self.refresh_data()
                 QMessageBox.information(self, "Успех", "Обслуживание удалено")
             except Exception as e:
+                app_logger.log_error("Удаление обслуживания", str(e), f"ID: {maintenance_id}")
                 QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
