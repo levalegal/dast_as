@@ -186,6 +186,48 @@ class Database:
         conn.close()
         return maintenance_id
     
+    def get_maintenance_by_id(self, maintenance_id: int) -> Optional[Dict]:
+        """Получить обслуживание по ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM maintenance WHERE id = ?", (maintenance_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return dict(row)
+        return None
+    
+    def update_maintenance(self, maintenance_id: int, **kwargs):
+        """Обновить запись о техническом обслуживании"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        fields = []
+        values = []
+        for key, value in kwargs.items():
+            if key in ['equipment_id', 'maintenance_date', 'type', 'cost', 'description']:
+                fields.append(f"{key} = ?")
+                if key == 'cost' and value is not None:
+                    values.append(str(value))
+                else:
+                    values.append(value)
+        
+        if fields:
+            values.append(maintenance_id)
+            query = f"UPDATE maintenance SET {', '.join(fields)} WHERE id = ?"
+            cursor.execute(query, values)
+            conn.commit()
+        
+        conn.close()
+    
+    def delete_maintenance(self, maintenance_id: int):
+        """Удалить запись о техническом обслуживании"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM maintenance WHERE id = ?", (maintenance_id,))
+        conn.commit()
+        conn.close()
+    
     def get_maintenance_by_equipment(self, equipment_id: int) -> List[Dict]:
         """Получить все обслуживания для оборудования"""
         conn = self.get_connection()
@@ -262,6 +304,59 @@ class Database:
         assignment_id = cursor.lastrowid
         conn.close()
         return assignment_id
+    
+    def get_assignment_by_id(self, assignment_id: int) -> Optional[Dict]:
+        """Получить назначение по ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM assignments WHERE id = ?", (assignment_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return dict(row)
+        return None
+    
+    def update_assignment(self, assignment_id: int, **kwargs):
+        """Обновить назначение оборудования"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        fields = []
+        values = []
+        for key, value in kwargs.items():
+            if key in ['equipment_id', 'assigned_to', 'department', 'start_date', 'end_date']:
+                fields.append(f"{key} = ?")
+                values.append(value)
+        
+        if fields:
+            values.append(assignment_id)
+            query = f"UPDATE assignments SET {', '.join(fields)} WHERE id = ?"
+            cursor.execute(query, values)
+            
+            # Обновляем текущее местоположение оборудования, если это активное назначение
+            if 'end_date' not in kwargs or kwargs['end_date'] is None:
+                assignment = self.get_assignment_by_id(assignment_id)
+                if assignment:
+                    location = f"{assignment['assigned_to']}"
+                    if assignment.get('department'):
+                        location += f" ({assignment['department']})"
+                    cursor.execute("""
+                        UPDATE equipment 
+                        SET current_location = ? 
+                        WHERE id = ?
+                    """, (location, assignment['equipment_id']))
+            
+            conn.commit()
+        
+        conn.close()
+    
+    def delete_assignment(self, assignment_id: int):
+        """Удалить назначение оборудования"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM assignments WHERE id = ?", (assignment_id,))
+        conn.commit()
+        conn.close()
     
     def get_assignments_by_equipment(self, equipment_id: int) -> List[Dict]:
         """Получить историю назначений для оборудования"""

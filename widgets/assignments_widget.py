@@ -158,6 +158,14 @@ class AssignmentsWidget(QWidget):
         self.add_btn.clicked.connect(self.add_assignment)
         buttons_layout.addWidget(self.add_btn)
         
+        self.edit_btn = QPushButton("Редактировать")
+        self.edit_btn.clicked.connect(self.edit_assignment)
+        buttons_layout.addWidget(self.edit_btn)
+        
+        self.delete_btn = QPushButton("Удалить")
+        self.delete_btn.clicked.connect(self.delete_assignment)
+        buttons_layout.addWidget(self.delete_btn)
+        
         self.view_btn = QPushButton("Просмотр истории")
         self.view_btn.clicked.connect(self.view_history)
         buttons_layout.addWidget(self.view_btn)
@@ -259,6 +267,62 @@ class AssignmentsWidget(QWidget):
                 QMessageBox.information(self, "Успех", "Назначение добавлено")
             except Exception as e:
                 QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
+    
+    def edit_assignment(self):
+        """Редактировать назначение"""
+        current_row = self.table.currentRow()
+        if current_row < 0:
+            QMessageBox.warning(self, "Ошибка", "Выберите запись для редактирования")
+            return
+        
+        assignment_id = int(self.table.item(current_row, 0).text())
+        assignment_data = self.db.get_assignment_by_id(assignment_id)
+        
+        if not assignment_data:
+            QMessageBox.warning(self, "Ошибка", "Запись не найдена")
+            return
+        
+        dialog = AssignmentDialog(self, self.db, assignment_data)
+        if dialog.exec():
+            data = dialog.get_data()
+            if not data['assigned_to']:
+                QMessageBox.warning(self, "Ошибка", "Заполните поле 'Назначено кому'")
+                return
+            
+            try:
+                self.db.update_assignment(assignment_id, **data)
+                self.refresh_data()
+                QMessageBox.information(self, "Успех", "Назначение обновлено")
+            except Exception as e:
+                QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
+    
+    def delete_assignment(self):
+        """Удалить назначение"""
+        current_row = self.table.currentRow()
+        if current_row < 0:
+            QMessageBox.warning(self, "Ошибка", "Выберите запись для удаления")
+            return
+        
+        assignment_id = int(self.table.item(current_row, 0).text())
+        equipment_text = self.table.item(current_row, 1).text()
+        assigned_to = self.table.item(current_row, 2).text()
+        
+        reply = QMessageBox.question(
+            self, 'Подтверждение',
+            f'Вы уверены, что хотите удалить назначение?\n\n'
+            f'Оборудование: {equipment_text}\n'
+            f'Назначено: {assigned_to}',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                self.db.delete_assignment(assignment_id)
+                self.refresh_data()
+                QMessageBox.information(self, "Успех", "Назначение удалено")
+            except Exception as e:
+                QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
     
     def view_history(self):
         """Просмотр истории назначений для выбранного оборудования"""

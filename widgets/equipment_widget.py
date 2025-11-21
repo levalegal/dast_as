@@ -162,23 +162,42 @@ class EquipmentWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # Группа поиска
-        search_group = QGroupBox("Поиск оборудования")
-        search_layout = QHBoxLayout()
+        # Группа поиска и фильтров
+        search_group = QGroupBox("Поиск и фильтры")
+        search_layout = QVBoxLayout()
         
+        # Строка поиска
+        search_row = QHBoxLayout()
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Введите инвентарный номер...")
-        self.search_edit.returnPressed.connect(self.search_equipment)
-        search_layout.addWidget(QLabel("Инвентарный номер:"))
-        search_layout.addWidget(self.search_edit)
-        
+        self.search_edit.setPlaceholderText("Поиск по инвентарному номеру или названию...")
+        self.search_edit.textChanged.connect(self.apply_filters)
+        search_row.addWidget(QLabel("Поиск:"))
+        search_row.addWidget(self.search_edit)
         self.search_btn = QPushButton("Найти")
         self.search_btn.clicked.connect(self.search_equipment)
-        search_layout.addWidget(self.search_btn)
-        
+        search_row.addWidget(self.search_btn)
         self.clear_search_btn = QPushButton("Очистить")
         self.clear_search_btn.clicked.connect(self.clear_search)
-        search_layout.addWidget(self.clear_search_btn)
+        search_row.addWidget(self.clear_search_btn)
+        search_layout.addLayout(search_row)
+        
+        # Фильтры
+        filters_row = QHBoxLayout()
+        filters_row.addWidget(QLabel("Категория:"))
+        self.category_filter = QComboBox()
+        self.category_filter.addItem("Все категории", None)
+        self.category_filter.currentIndexChanged.connect(self.apply_filters)
+        filters_row.addWidget(self.category_filter)
+        
+        filters_row.addWidget(QLabel("Статус:"))
+        self.status_filter = QComboBox()
+        self.status_filter.addItem("Все статусы", None)
+        self.status_filter.addItems(["active", "in_repair", "written_off", "reserved"])
+        self.status_filter.currentIndexChanged.connect(self.apply_filters)
+        filters_row.addWidget(self.status_filter)
+        
+        filters_row.addStretch()
+        search_layout.addLayout(filters_row)
         
         search_group.setLayout(search_layout)
         layout.addWidget(search_group)
@@ -225,19 +244,89 @@ class EquipmentWidget(QWidget):
     def refresh_data(self):
         """Обновить данные в таблице"""
         equipment_list = self.db.get_all_equipment()
-        self.table.setRowCount(len(equipment_list))
         
-        for row, equipment in enumerate(equipment_list):
+        # Обновляем список категорий в фильтре
+        categories = set()
+        for eq in equipment_list:
+            if eq.get('category'):
+                categories.add(eq['category'])
+        
+        current_category = self.category_filter.currentData()
+        self.category_filter.clear()
+        self.category_filter.addItem("Все категории", None)
+        for cat in sorted(categories):
+            self.category_filter.addItem(cat, cat)
+        
+        # Восстанавливаем выбор категории
+        if current_category:
+            for i in range(self.category_filter.count()):
+                if self.category_filter.itemData(i) == current_category:
+                    self.category_filter.setCurrentIndex(i)
+                    break
+        
+        self.apply_filters()
+        self.equipment_updated.emit()
+    
+    def apply_filters(self):
+        """Применить фильтры к таблице"""
+        equipment_list = self.db.get_all_equipment()
+        
+        # Фильтрация
+        search_text = self.search_edit.text().strip().lower()
+        category_filter = self.category_filter.currentData()
+        status_filter = self.status_filter.currentData()
+        
+        filtered_list = []
+        for equipment in equipment_list:
+            # Поиск по тексту
+            if search_text:
+                if (search_text not in equipment['inventory_number'].lower() and
+                    search_text not in equipment['name'].lower()):
+                    continue
+            
+            # Фильтр по категории
+            if category_filter and equipment.get('category') != category_filter:
+                continue
+            
+            # Фильтр по статусу
+            if status_filter and equipment.get('status') != status_filter:
+                continue
+            
+            filtered_list.append(equipment)
+        
+        # Отображаем отфильтрованные данные
+        self.table.setRowCount(len(filtered_list))
+        
+        for row, equipment in enumerate(filtered_list):
             self.table.setItem(row, 0, QTableWidgetItem(str(equipment['id'])))
             self.table.setItem(row, 1, QTableWidgetItem(equipment['inventory_number']))
             self.table.setItem(row, 2, QTableWidgetItem(equipment['name']))
             self.table.setItem(row, 3, QTableWidgetItem(equipment['category'] or ''))
-            self.table.setItem(row, 4, QTableWidgetItem(equipment['purchase_date'] or ''))
+            
+            # Форматирование даты
+            date_text = equipment['purchase_date'] or ''
+            self.table.setItem(row, 4, QTableWidgetItem(date_text))
+            
+            # Форматирование цены
             price = equipment['purchase_price'] or '0'
-            self.table.setItem(row, 5, QTableWidgetItem(str(price)))
-            self.table.setItem(row, 6, QTableWidgetItem(equipment['status']))
-        
-        self.equipment_updated.emit()
+            try:
+                price_decimal = Decimal(str(price))
+                price_text = f"{price_decimal:,.2f}".replace(',', ' ')
+            except:
+                price_text = str(price)
+            price_item = QTableWidgetItem(price_text)
+            price_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.table.setItem(row, 5, price_item)
+            
+            # Форматирование статуса
+            status = equipment['status']
+            status_text = {
+                'active': 'Активное',
+                'in_repair': 'В ремонте',
+                'written_off': 'Списано',
+                'reserved': 'Резерв'
+            }.get(status, status)
+            self.table.setItem(row, 6, QTableWidgetItem(status_text))
     
     def search_equipment(self):
         """Поиск оборудования по инвентарному номеру"""
@@ -259,9 +348,11 @@ class EquipmentWidget(QWidget):
                                   f"Оборудование с инвентарным номером '{inventory_number}' не найдено")
     
     def clear_search(self):
-        """Очистить поиск"""
+        """Очистить поиск и фильтры"""
         self.search_edit.clear()
-        self.refresh_data()
+        self.category_filter.setCurrentIndex(0)
+        self.status_filter.setCurrentIndex(0)
+        self.apply_filters()
     
     def add_equipment(self):
         """Добавить новое оборудование"""

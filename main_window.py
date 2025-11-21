@@ -2,15 +2,17 @@
 Главное окно приложения EquipmentTracker
 """
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-                             QTabWidget, QStatusBar, QMessageBox)
+                             QTabWidget, QStatusBar, QMessageBox, QMenuBar, QMenu)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QAction
+from utils.backup import BackupManager
 from database import Database
 from widgets.equipment_widget import EquipmentWidget
 from widgets.maintenance_widget import MaintenanceWidget
 from widgets.assignments_widget import AssignmentsWidget
 from widgets.reports_widget import ReportsWidget
 from widgets.dashboard_widget import DashboardWidget
+from widgets.maintenance_scheduler_widget import MaintenanceSchedulerWidget
 
 
 class MainWindow(QMainWindow):
@@ -99,6 +101,10 @@ class MainWindow(QMainWindow):
         self.maintenance_widget = MaintenanceWidget(self.db)
         self.tabs.addTab(self.maintenance_widget, "Техническое обслуживание")
         
+        # Вкладка "Планировщик ТО"
+        self.scheduler_widget = MaintenanceSchedulerWidget(self.db)
+        self.tabs.addTab(self.scheduler_widget, "Планировщик ТО")
+        
         # Вкладка "Перемещения"
         self.assignments_widget = AssignmentsWidget(self.db)
         self.tabs.addTab(self.assignments_widget, "История перемещений")
@@ -107,6 +113,9 @@ class MainWindow(QMainWindow):
         self.reports_widget = ReportsWidget(self.db)
         self.tabs.addTab(self.reports_widget, "Отчеты")
         
+        # Меню
+        self.create_menu()
+        
         # Статусная строка
         self.statusBar().showMessage("Готово к работе")
         
@@ -114,12 +123,87 @@ class MainWindow(QMainWindow):
         self.equipment_widget.equipment_updated.connect(self.on_equipment_updated)
         self.assignments_widget.assignment_updated.connect(self.on_assignment_updated)
     
+    def create_menu(self):
+        """Создать меню приложения"""
+        menubar = self.menuBar()
+        
+        # Меню "Файл"
+        file_menu = menubar.addMenu("Файл")
+        
+        backup_action = QAction("Создать резервную копию", self)
+        backup_action.setShortcut("Ctrl+B")
+        backup_action.triggered.connect(self.create_backup)
+        file_menu.addAction(backup_action)
+        
+        restore_action = QAction("Восстановить из резервной копии", self)
+        restore_action.setShortcut("Ctrl+R")
+        restore_action.triggered.connect(self.restore_backup)
+        file_menu.addAction(restore_action)
+        
+        file_menu.addSeparator()
+        
+        exit_action = QAction("Выход", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+    
+    def create_backup(self):
+        """Создать резервную копию базы данных"""
+        try:
+            backup_path = BackupManager.create_backup(self.db.db_path)
+            QMessageBox.information(
+                self, "Успех",
+                f"Резервная копия создана:\n{backup_path}"
+            )
+            self.statusBar().showMessage(f"Резервная копия создана: {backup_path}", 5000)
+        except Exception as e:
+            QMessageBox.warning(self, "Ошибка", f"Не удалось создать резервную копию:\n{str(e)}")
+    
+    def restore_backup(self):
+        """Восстановить базу данных из резервной копии"""
+        reply = QMessageBox.question(
+            self, 'Подтверждение',
+            'Восстановление базы данных заменит все текущие данные.\n'
+            'Убедитесь, что у вас есть актуальная резервная копия.\n\n'
+            'Продолжить?',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            backup_path = BackupManager.get_backup_filename(self)
+            if backup_path:
+                try:
+                    # Создаем резервную копию текущей БД перед восстановлением
+                    current_backup = BackupManager.create_backup(self.db.db_path)
+                    
+                    BackupManager.restore_backup(backup_path, self.db.db_path)
+                    
+                    QMessageBox.information(
+                        self, "Успех",
+                        f"База данных восстановлена из резервной копии.\n"
+                        f"Текущая БД сохранена в: {current_backup}"
+                    )
+                    
+                    # Перезагружаем все виджеты
+                    self.equipment_widget.refresh_data()
+                    self.maintenance_widget.refresh_data()
+                    self.assignments_widget.refresh_data()
+                    self.reports_widget.refresh_data()
+                    self.dashboard_widget.refresh_data()
+                    self.scheduler_widget.refresh_data()
+                    
+                    self.statusBar().showMessage("База данных восстановлена", 5000)
+                except Exception as e:
+                    QMessageBox.warning(self, "Ошибка", f"Не удалось восстановить базу данных:\n{str(e)}")
+    
     def on_equipment_updated(self):
         """Обработчик обновления оборудования"""
         self.dashboard_widget.refresh_data()
         self.maintenance_widget.refresh_equipment_list()
         self.assignments_widget.refresh_equipment_list()
         self.reports_widget.refresh_data()
+        self.scheduler_widget.refresh_data()
         self.statusBar().showMessage("Данные обновлены", 2000)
     
     def on_assignment_updated(self):

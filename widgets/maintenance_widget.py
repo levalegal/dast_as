@@ -174,9 +174,13 @@ class MaintenanceWidget(QWidget):
         self.add_btn.clicked.connect(self.add_maintenance)
         buttons_layout.addWidget(self.add_btn)
         
-        self.view_btn = QPushButton("Просмотр")
-        self.view_btn.clicked.connect(self.view_maintenance)
-        buttons_layout.addWidget(self.view_btn)
+        self.edit_btn = QPushButton("Редактировать")
+        self.edit_btn.clicked.connect(self.edit_maintenance)
+        buttons_layout.addWidget(self.edit_btn)
+        
+        self.delete_btn = QPushButton("Удалить")
+        self.delete_btn.clicked.connect(self.delete_maintenance)
+        buttons_layout.addWidget(self.delete_btn)
         
         self.refresh_btn = QPushButton("Обновить")
         self.refresh_btn.clicked.connect(self.refresh_data)
@@ -281,18 +285,58 @@ class MaintenanceWidget(QWidget):
             except Exception as e:
                 QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
     
-    def view_maintenance(self):
-        """Просмотр деталей обслуживания"""
+    def edit_maintenance(self):
+        """Редактировать обслуживание"""
         current_row = self.table.currentRow()
         if current_row < 0:
-            QMessageBox.warning(self, "Ошибка", "Выберите запись для просмотра")
+            QMessageBox.warning(self, "Ошибка", "Выберите запись для редактирования")
             return
         
         maintenance_id = int(self.table.item(current_row, 0).text())
-        # Здесь можно добавить детальный просмотр
-        QMessageBox.information(self, "Информация", 
-                               f"ID: {maintenance_id}\n"
-                               f"Оборудование: {self.table.item(current_row, 1).text()}\n"
-                               f"Дата: {self.table.item(current_row, 2).text()}\n"
-                               f"Тип: {self.table.item(current_row, 3).text()}\n"
-                               f"Стоимость: {self.table.item(current_row, 4).text()}")
+        maintenance_data = self.db.get_maintenance_by_id(maintenance_id)
+        
+        if not maintenance_data:
+            QMessageBox.warning(self, "Ошибка", "Запись не найдена")
+            return
+        
+        dialog = MaintenanceDialog(self, self.db, maintenance_data)
+        if dialog.exec():
+            data = dialog.get_data()
+            if not data['type']:
+                QMessageBox.warning(self, "Ошибка", "Заполните тип обслуживания")
+                return
+            
+            try:
+                self.db.update_maintenance(maintenance_id, **data)
+                self.refresh_data()
+                QMessageBox.information(self, "Успех", "Обслуживание обновлено")
+            except Exception as e:
+                QMessageBox.warning(self, "Ошибка", f"Ошибка: {str(e)}")
+    
+    def delete_maintenance(self):
+        """Удалить обслуживание"""
+        current_row = self.table.currentRow()
+        if current_row < 0:
+            QMessageBox.warning(self, "Ошибка", "Выберите запись для удаления")
+            return
+        
+        maintenance_id = int(self.table.item(current_row, 0).text())
+        equipment_text = self.table.item(current_row, 1).text()
+        date_text = self.table.item(current_row, 2).text()
+        
+        reply = QMessageBox.question(
+            self, 'Подтверждение',
+            f'Вы уверены, что хотите удалить обслуживание?\n\n'
+            f'Оборудование: {equipment_text}\n'
+            f'Дата: {date_text}',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                self.db.delete_maintenance(maintenance_id)
+                self.refresh_data()
+                QMessageBox.information(self, "Успех", "Обслуживание удалено")
+            except Exception as e:
+                QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
