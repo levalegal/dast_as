@@ -12,10 +12,18 @@ def main():
     app.setApplicationName("EquipmentTracker")
     app.setOrganizationName("EquipmentTracker")
     
-    window = MainWindow()
-    window.show()
-    
-    sys.exit(app.exec())
+    try:
+        window = MainWindow()
+        window.show()
+        sys.exit(app.exec())
+    except Exception as e:
+        from PyQt6.QtWidgets import QMessageBox
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Critical)
+        msg.setWindowTitle("Критическая ошибка")
+        msg.setText(f"Произошла ошибка при запуске приложения:\n{str(e)}")
+        msg.exec()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

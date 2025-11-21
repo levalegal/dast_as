@@ -36,11 +36,13 @@ class EquipmentDialog(QDialog):
         # Инвентарный номер
         self.inventory_number_edit = QLineEdit()
         self.inventory_number_edit.setPlaceholderText("ИНВ-001")
+        self.inventory_number_edit.setToolTip("Уникальный инвентарный номер оборудования")
         form.addRow("Инвентарный номер *:", self.inventory_number_edit)
         
         # Наименование
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("Название оборудования")
+        self.name_edit.setToolTip("Полное наименование оборудования")
         form.addRow("Наименование *:", self.name_edit)
         
         # Категория
@@ -65,6 +67,7 @@ class EquipmentDialog(QDialog):
         # Цена покупки
         self.purchase_price_edit = QLineEdit()
         self.purchase_price_edit.setPlaceholderText("0.00")
+        self.purchase_price_edit.setToolTip("Стоимость покупки оборудования в рублях")
         validator = QDoubleValidator(0, 999999999, 2)
         self.purchase_price_edit.setValidator(validator)
         form.addRow("Цена покупки:", self.purchase_price_edit)

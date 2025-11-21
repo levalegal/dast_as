@@ -16,9 +16,14 @@ class Database:
     
     def get_connection(self):
         """Получить соединение с базой данных"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            # Включаем проверку внешних ключей
+            conn.execute("PRAGMA foreign_keys = ON")
+            return conn
+        except sqlite3.Error as e:
+            raise ConnectionError(f"Ошибка подключения к базе данных: {e}")
     
     def init_database(self):
         """Инициализация базы данных и создание таблиц"""
