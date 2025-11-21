@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QAction
 from utils.backup import BackupManager
 from utils.logger import app_logger
+from utils.styles import ModernStyles
 from database import Database
 from widgets.equipment_widget import EquipmentWidget
 from widgets.maintenance_widget import MaintenanceWidget
@@ -29,54 +30,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("EquipmentTracker - Учет оборудования")
         self.setGeometry(100, 100, 1200, 800)
         
-        # Применяем стили
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #f5f5f5;
-            }
-            QTabWidget::pane {
-                border: 1px solid #ddd;
-                background-color: white;
-            }
-            QTabBar::tab {
-                background-color: #e0e0e0;
-                padding: 8px 16px;
-                margin-right: 2px;
-            }
-            QTabBar::tab:selected {
-                background-color: white;
-                border-bottom: 2px solid #2196F3;
-            }
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-            QPushButton:pressed {
-                background-color: #0D47A1;
-            }
-            QTableWidget {
-                gridline-color: #e0e0e0;
-                background-color: white;
-            }
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #ddd;
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
-        """)
+        # Применяем современные стили
+        self.setStyleSheet(ModernStyles.get_main_stylesheet())
         
         # Центральный виджет
         central_widget = QWidget()
@@ -131,12 +86,12 @@ class MainWindow(QMainWindow):
         # Меню "Файл"
         file_menu = menubar.addMenu("Файл")
         
-        backup_action = QAction("Создать резервную копию", self)
+        backup_action = QAction("💾 Создать резервную копию", self)
         backup_action.setShortcut("Ctrl+B")
         backup_action.triggered.connect(self.create_backup)
         file_menu.addAction(backup_action)
         
-        restore_action = QAction("Восстановить из резервной копии", self)
+        restore_action = QAction("📂 Восстановить из резервной копии", self)
         restore_action.setShortcut("Ctrl+R")
         restore_action.triggered.connect(self.restore_backup)
         file_menu.addAction(restore_action)

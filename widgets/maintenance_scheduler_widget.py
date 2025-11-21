@@ -68,7 +68,8 @@ class MaintenanceSchedulerWidget(QWidget):
         # Кнопки
         buttons_layout = QHBoxLayout()
         
-        self.refresh_btn = QPushButton("Обновить")
+        self.refresh_btn = QPushButton("🔄 Обновить")
+        self.refresh_btn.setProperty("class", "secondary-button")
         self.refresh_btn.clicked.connect(self.refresh_data)
         buttons_layout.addWidget(self.refresh_btn)
         
@@ -85,6 +86,7 @@ class MaintenanceSchedulerWidget(QWidget):
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)
         layout.addWidget(self.table)
     
     def refresh_data(self):

@@ -24,9 +24,10 @@ class DashboardWidget(QWidget):
         self.setLayout(layout)
         
         # Заголовок
-        title = QLabel("Общая статистика")
+        title = QLabel("📊 Общая статистика")
+        title.setProperty("class", "title")
         title_font = QFont()
-        title_font.setPointSize(16)
+        title_font.setPointSize(18)
         title_font.setBold(True)
         title.setFont(title_font)
         layout.addWidget(title)
@@ -38,9 +39,15 @@ class DashboardWidget(QWidget):
         equipment_group = QGroupBox("Оборудование")
         equipment_layout = QVBoxLayout()
         
-        self.total_equipment_label = QLabel("Всего: 0")
-        self.total_equipment_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+        self.total_equipment_label = QLabel("0")
+        self.total_equipment_label.setProperty("class", "stat-value")
         equipment_layout.addWidget(self.total_equipment_label)
+        
+        total_label = QLabel("Всего единиц")
+        total_label.setProperty("class", "stat-label")
+        equipment_layout.addWidget(total_label)
+        
+        equipment_layout.addSpacing(10)
         
         self.active_equipment_label = QLabel("Активное: 0")
         equipment_layout.addWidget(self.active_equipment_label)
@@ -58,14 +65,20 @@ class DashboardWidget(QWidget):
         maintenance_group = QGroupBox("Техническое обслуживание")
         maintenance_layout = QVBoxLayout()
         
-        self.total_maintenance_label = QLabel("Всего обслуживаний: 0")
-        self.total_maintenance_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+        self.total_maintenance_label = QLabel("0")
+        self.total_maintenance_label.setProperty("class", "stat-value")
         maintenance_layout.addWidget(self.total_maintenance_label)
         
-        self.total_maintenance_cost_label = QLabel("Общая стоимость: 0.00")
+        maintenance_count_label = QLabel("Всего обслуживаний")
+        maintenance_count_label.setProperty("class", "stat-label")
+        maintenance_layout.addWidget(maintenance_count_label)
+        
+        maintenance_layout.addSpacing(10)
+        
+        self.total_maintenance_cost_label = QLabel("Общая стоимость: 0.00 ₽")
         maintenance_layout.addWidget(self.total_maintenance_cost_label)
         
-        self.avg_maintenance_cost_label = QLabel("Средняя стоимость: 0.00")
+        self.avg_maintenance_cost_label = QLabel("Средняя стоимость: 0.00 ₽")
         maintenance_layout.addWidget(self.avg_maintenance_cost_label)
         
         maintenance_group.setLayout(maintenance_layout)
@@ -75,9 +88,15 @@ class DashboardWidget(QWidget):
         assignments_group = QGroupBox("Назначения")
         assignments_layout = QVBoxLayout()
         
-        self.total_assignments_label = QLabel("Всего назначений: 0")
-        self.total_assignments_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+        self.total_assignments_label = QLabel("0")
+        self.total_assignments_label.setProperty("class", "stat-value")
         assignments_layout.addWidget(self.total_assignments_label)
+        
+        assignments_count_label = QLabel("Всего назначений")
+        assignments_count_label.setProperty("class", "stat-label")
+        assignments_layout.addWidget(assignments_count_label)
+        
+        assignments_layout.addSpacing(10)
         
         self.active_assignments_label = QLabel("Активных: 0")
         assignments_layout.addWidget(self.active_assignments_label)
@@ -89,11 +108,17 @@ class DashboardWidget(QWidget):
         finance_group = QGroupBox("Финансы")
         finance_layout = QVBoxLayout()
         
-        self.total_purchase_cost_label = QLabel("Общая стоимость покупок: 0.00")
-        self.total_purchase_cost_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+        self.total_purchase_cost_label = QLabel("0.00 ₽")
+        self.total_purchase_cost_label.setProperty("class", "stat-value")
         finance_layout.addWidget(self.total_purchase_cost_label)
         
-        self.total_maintenance_finance_label = QLabel("Общая стоимость ТО: 0.00")
+        purchase_label = QLabel("Стоимость покупок")
+        purchase_label.setProperty("class", "stat-label")
+        finance_layout.addWidget(purchase_label)
+        
+        finance_layout.addSpacing(10)
+        
+        self.total_maintenance_finance_label = QLabel("Стоимость ТО: 0.00 ₽")
         finance_layout.addWidget(self.total_maintenance_finance_label)
         
         finance_group.setLayout(finance_layout)
@@ -102,7 +127,8 @@ class DashboardWidget(QWidget):
         layout.addLayout(stats_grid)
         
         # Кнопка обновления
-        refresh_btn = QPushButton("Обновить статистику")
+        refresh_btn = QPushButton("🔄 Обновить статистику")
+        refresh_btn.setProperty("class", "secondary-button")
         refresh_btn.clicked.connect(self.refresh_data)
         layout.addWidget(refresh_btn)
         
@@ -129,7 +155,7 @@ class DashboardWidget(QWidget):
                 except:
                     pass
         
-        self.total_equipment_label.setText(f"Всего: {total_equipment}")
+        self.total_equipment_label.setText(str(total_equipment))
         self.active_equipment_label.setText(f"Активное: {status_counts['active']}")
         self.in_repair_label.setText(f"В ремонте: {status_counts['in_repair']}")
         self.written_off_label.setText(f"Списано: {status_counts['written_off']}")
@@ -140,9 +166,9 @@ class DashboardWidget(QWidget):
         total_maintenance_cost = Decimal(maintenance_summary.get('total_cost', 0) or 0)
         avg_maintenance_cost = Decimal(maintenance_summary.get('avg_cost', 0) or 0)
         
-        self.total_maintenance_label.setText(f"Всего обслуживаний: {total_maintenance}")
-        self.total_maintenance_cost_label.setText(f"Общая стоимость: {total_maintenance_cost:.2f}")
-        self.avg_maintenance_cost_label.setText(f"Средняя стоимость: {avg_maintenance_cost:.2f}")
+        self.total_maintenance_label.setText(str(total_maintenance))
+        self.total_maintenance_cost_label.setText(f"Общая стоимость: {total_maintenance_cost:,.2f} ₽".replace(',', ' '))
+        self.avg_maintenance_cost_label.setText(f"Средняя стоимость: {avg_maintenance_cost:,.2f} ₽".replace(',', ' '))
         
         # Статистика по назначениям
         all_equipment = self.db.get_all_equipment()
@@ -156,9 +182,9 @@ class DashboardWidget(QWidget):
                 if not assignment.get('end_date'):
                     active_assignments += 1
         
-        self.total_assignments_label.setText(f"Всего назначений: {total_assignments}")
+        self.total_assignments_label.setText(str(total_assignments))
         self.active_assignments_label.setText(f"Активных: {active_assignments}")
         
         # Финансы
-        self.total_purchase_cost_label.setText(f"Общая стоимость покупок: {total_purchase_cost:.2f}")
-        self.total_maintenance_finance_label.setText(f"Общая стоимость ТО: {total_maintenance_cost:.2f}")
+        self.total_purchase_cost_label.setText(f"{total_purchase_cost:,.2f} ₽".replace(',', ' '))
+        self.total_maintenance_finance_label.setText(f"Стоимость ТО: {total_maintenance_cost:,.2f} ₽".replace(',', ' '))

@@ -171,19 +171,22 @@ class MaintenanceWidget(QWidget):
         # Кнопки управления
         buttons_layout = QHBoxLayout()
         
-        self.add_btn = QPushButton("Добавить обслуживание")
+        self.add_btn = QPushButton("➕ Добавить обслуживание")
+        self.add_btn.setProperty("class", "action-button")
         self.add_btn.clicked.connect(self.add_maintenance)
         buttons_layout.addWidget(self.add_btn)
         
-        self.edit_btn = QPushButton("Редактировать")
+        self.edit_btn = QPushButton("✏️ Редактировать")
         self.edit_btn.clicked.connect(self.edit_maintenance)
         buttons_layout.addWidget(self.edit_btn)
         
-        self.delete_btn = QPushButton("Удалить")
+        self.delete_btn = QPushButton("🗑️ Удалить")
+        self.delete_btn.setProperty("class", "danger-button")
         self.delete_btn.clicked.connect(self.delete_maintenance)
         buttons_layout.addWidget(self.delete_btn)
         
-        self.refresh_btn = QPushButton("Обновить")
+        self.refresh_btn = QPushButton("🔄 Обновить")
+        self.refresh_btn.setProperty("class", "secondary-button")
         self.refresh_btn.clicked.connect(self.refresh_data)
         buttons_layout.addWidget(self.refresh_btn)
         
@@ -200,6 +203,7 @@ class MaintenanceWidget(QWidget):
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)
         layout.addWidget(self.table)
     
     def refresh_equipment_list(self):

@@ -4,8 +4,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QTableWidgetItem, QPushButton, QLineEdit, QLabel,
                              QDialog, QFormLayout, QDateEdit, QComboBox,
-                             QMessageBox, QHeaderView, QGroupBox)
+                             QMessageBox, QHeaderView, QGroupBox, QMenu)
 from PyQt6.QtCore import Qt, QDate, pyqtSignal
+from PyQt6.QtGui import QAction
 from PyQt6.QtGui import QDoubleValidator
 from decimal import Decimal
 from datetime import datetime
@@ -175,10 +176,11 @@ class EquipmentWidget(QWidget):
         self.search_edit.textChanged.connect(self.apply_filters)
         search_row.addWidget(QLabel("Поиск:"))
         search_row.addWidget(self.search_edit)
-        self.search_btn = QPushButton("Найти")
+        self.search_btn = QPushButton("🔍 Найти")
         self.search_btn.clicked.connect(self.search_equipment)
         search_row.addWidget(self.search_btn)
-        self.clear_search_btn = QPushButton("Очистить")
+        self.clear_search_btn = QPushButton("❌ Очистить")
+        self.clear_search_btn.setProperty("class", "secondary-button")
         self.clear_search_btn.clicked.connect(self.clear_search)
         search_row.addWidget(self.clear_search_btn)
         search_layout.addLayout(search_row)
@@ -207,27 +209,32 @@ class EquipmentWidget(QWidget):
         # Кнопки управления
         buttons_layout = QHBoxLayout()
         
-        self.add_btn = QPushButton("Добавить оборудование")
+        self.add_btn = QPushButton("➕ Добавить оборудование")
+        self.add_btn.setProperty("class", "action-button")
         self.add_btn.clicked.connect(self.add_equipment)
         buttons_layout.addWidget(self.add_btn)
         
-        self.edit_btn = QPushButton("Редактировать")
+        self.edit_btn = QPushButton("✏️ Редактировать")
         self.edit_btn.clicked.connect(self.edit_equipment)
         buttons_layout.addWidget(self.edit_btn)
         
-        self.delete_btn = QPushButton("Удалить")
+        self.delete_btn = QPushButton("🗑️ Удалить")
+        self.delete_btn.setProperty("class", "danger-button")
         self.delete_btn.clicked.connect(self.delete_equipment)
         buttons_layout.addWidget(self.delete_btn)
         
-        self.refresh_btn = QPushButton("Обновить")
+        self.refresh_btn = QPushButton("🔄 Обновить")
+        self.refresh_btn.setProperty("class", "secondary-button")
         self.refresh_btn.clicked.connect(self.refresh_data)
         buttons_layout.addWidget(self.refresh_btn)
         
-        self.export_btn = QPushButton("Экспорт в CSV")
+        self.export_btn = QPushButton("📤 Экспорт в CSV")
+        self.export_btn.setProperty("class", "secondary-button")
         self.export_btn.clicked.connect(self.export_data)
         buttons_layout.addWidget(self.export_btn)
         
-        self.import_btn = QPushButton("Импорт из CSV")
+        self.import_btn = QPushButton("📥 Импорт из CSV")
+        self.import_btn.setProperty("class", "secondary-button")
         self.import_btn.clicked.connect(self.import_data)
         buttons_layout.addWidget(self.import_btn)
         
@@ -245,6 +252,9 @@ class EquipmentWidget(QWidget):
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)  # Включаем сортировку
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.table)
     
     def refresh_data(self):
@@ -446,6 +456,38 @@ class EquipmentWidget(QWidget):
             except Exception as e:
                 app_logger.log_error("Удаление оборудования", str(e), f"ID: {equipment_id}")
                 QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
+    
+    def show_context_menu(self, position):
+        """Показать контекстное меню для таблицы"""
+        if self.table.itemAt(position) is None:
+            return
+        
+        menu = QMenu(self)
+        
+        edit_action = QAction("✏️ Редактировать", self)
+        edit_action.triggered.connect(self.edit_equipment)
+        menu.addAction(edit_action)
+        
+        delete_action = QAction("🗑️ Удалить", self)
+        delete_action.triggered.connect(self.delete_equipment)
+        menu.addAction(delete_action)
+        
+        menu.addSeparator()
+        
+        copy_action = QAction("📋 Копировать инвентарный номер", self)
+        copy_action.triggered.connect(self.copy_inventory_number)
+        menu.addAction(copy_action)
+        
+        menu.exec(self.table.viewport().mapToGlobal(position))
+    
+    def copy_inventory_number(self):
+        """Копировать инвентарный номер в буфер обмена"""
+        current_row = self.table.currentRow()
+        if current_row >= 0:
+            inventory_number = self.table.item(current_row, 1).text()
+            from PyQt6.QtWidgets import QApplication
+            QApplication.clipboard().setText(inventory_number)
+            self.parent().statusBar().showMessage(f"Инвентарный номер '{inventory_number}' скопирован", 2000)
     
     def export_data(self):
         """Экспорт данных оборудования в CSV"""

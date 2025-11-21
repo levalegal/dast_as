@@ -34,11 +34,13 @@ class ReportsWidget(QWidget):
         depreciation_widget.setLayout(depreciation_layout)
         
         buttons_layout = QHBoxLayout()
-        self.depreciation_refresh_btn = QPushButton("Обновить отчет")
+        self.depreciation_refresh_btn = QPushButton("🔄 Обновить отчет")
+        self.depreciation_refresh_btn.setProperty("class", "secondary-button")
         self.depreciation_refresh_btn.clicked.connect(self.refresh_depreciation)
         buttons_layout.addWidget(self.depreciation_refresh_btn)
         
-        self.depreciation_export_btn = QPushButton("Экспорт в CSV")
+        self.depreciation_export_btn = QPushButton("📤 Экспорт в CSV")
+        self.depreciation_export_btn.setProperty("class", "secondary-button")
         self.depreciation_export_btn.clicked.connect(self.export_depreciation)
         buttons_layout.addWidget(self.depreciation_export_btn)
         
@@ -53,6 +55,7 @@ class ReportsWidget(QWidget):
         ])
         self.depreciation_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.depreciation_table.setAlternatingRowColors(True)
+        self.depreciation_table.setSortingEnabled(True)
         depreciation_layout.addWidget(self.depreciation_table)
         
         self.tabs.addTab(depreciation_widget, "Амортизация")
@@ -78,11 +81,13 @@ class ReportsWidget(QWidget):
         self.end_date_edit.setDate(QDate.currentDate())
         filter_layout.addWidget(self.end_date_edit)
         
-        self.cost_refresh_btn = QPushButton("Обновить отчет")
+        self.cost_refresh_btn = QPushButton("🔄 Обновить")
+        self.cost_refresh_btn.setProperty("class", "secondary-button")
         self.cost_refresh_btn.clicked.connect(self.refresh_maintenance_cost)
         filter_layout.addWidget(self.cost_refresh_btn)
         
-        self.cost_export_btn = QPushButton("Экспорт в CSV")
+        self.cost_export_btn = QPushButton("📤 Экспорт")
+        self.cost_export_btn.setProperty("class", "secondary-button")
         self.cost_export_btn.clicked.connect(self.export_maintenance_cost)
         filter_layout.addWidget(self.cost_export_btn)
         
@@ -101,6 +106,7 @@ class ReportsWidget(QWidget):
         ])
         self.maintenance_cost_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.maintenance_cost_table.setAlternatingRowColors(True)
+        self.maintenance_cost_table.setSortingEnabled(True)
         maintenance_cost_layout.addWidget(self.maintenance_cost_table)
         
         self.tabs.addTab(maintenance_cost_widget, "Стоимость содержания")
@@ -126,11 +132,13 @@ class ReportsWidget(QWidget):
         self.report_end_date_edit.setDate(QDate.currentDate())
         report_filter_layout.addWidget(self.report_end_date_edit)
         
-        self.maintenance_report_refresh_btn = QPushButton("Сформировать отчет")
+        self.maintenance_report_refresh_btn = QPushButton("📊 Сформировать отчет")
+        self.maintenance_report_refresh_btn.setProperty("class", "action-button")
         self.maintenance_report_refresh_btn.clicked.connect(self.refresh_maintenance_report)
         report_filter_layout.addWidget(self.maintenance_report_refresh_btn)
         
-        self.maintenance_report_export_btn = QPushButton("Экспорт в CSV")
+        self.maintenance_report_export_btn = QPushButton("📤 Экспорт в CSV")
+        self.maintenance_report_export_btn.setProperty("class", "secondary-button")
         self.maintenance_report_export_btn.clicked.connect(self.export_maintenance_report)
         report_filter_layout.addWidget(self.maintenance_report_export_btn)
         
@@ -144,6 +152,7 @@ class ReportsWidget(QWidget):
         ])
         self.maintenance_report_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.maintenance_report_table.setAlternatingRowColors(True)
+        self.maintenance_report_table.setSortingEnabled(True)
         maintenance_report_layout.addWidget(self.maintenance_report_table)
         
         self.tabs.addTab(maintenance_report_widget, "Отчет по ТО")
