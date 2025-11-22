@@ -89,8 +89,10 @@ class MaintenanceSchedulerWidget(QWidget):
         self.table.setSortingEnabled(True)
         layout.addWidget(self.table)
     
-    def refresh_data(self):
-        """Обновить данные о предстоящем обслуживании"""
+    def refresh_data(self, *args):
+        """Обновить данные о предстоящем обслуживании
+        *args используется для игнорирования аргументов от сигналов QSpinBox.valueChanged
+        """
         days_ahead = self.days_spinbox.value()
         default_interval = self.interval_spinbox.value()
         today = datetime.now().date()
