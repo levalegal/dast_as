@@ -202,6 +202,8 @@ class AssignmentsWidget(QWidget):
     def refresh_equipment_list(self):
         """Обновить список оборудования в фильтре"""
         current_id = self.equipment_filter.currentData()
+        # Отключаем сигнал, чтобы избежать рекурсии
+        self.equipment_filter.blockSignals(True)
         self.equipment_filter.clear()
         self.equipment_filter.addItem("Все", None)
         
@@ -218,6 +220,9 @@ class AssignmentsWidget(QWidget):
                 if self.equipment_filter.itemData(i) == current_id:
                     self.equipment_filter.setCurrentIndex(i)
                     break
+        
+        # Включаем сигнал обратно
+        self.equipment_filter.blockSignals(False)
     
     def refresh_data(self):
         """Обновить данные в таблице"""
