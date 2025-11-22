@@ -106,6 +106,8 @@ class MaintenanceSchedulerWidget(QWidget):
                 categories.add(eq['category'])
         
         current_category = self.category_filter.currentData()
+        # Отключаем сигнал, чтобы избежать рекурсии
+        self.category_filter.blockSignals(True)
         self.category_filter.clear()
         self.category_filter.addItem("Все категории", None)
         for cat in sorted(categories):
@@ -117,6 +119,9 @@ class MaintenanceSchedulerWidget(QWidget):
                 if self.category_filter.itemData(i) == current_category:
                     self.category_filter.setCurrentIndex(i)
                     break
+        
+        # Включаем сигнал обратно
+        self.category_filter.blockSignals(False)
         
         selected_category = self.category_filter.currentData()
         upcoming_maintenance = []
