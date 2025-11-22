@@ -4,9 +4,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QTableWidgetItem, QPushButton, QComboBox, QLabel,
                              QDialog, QFormLayout, QDateEdit, QLineEdit,
-                             QMessageBox, QHeaderView, QGroupBox, QTextEdit)
+                             QMessageBox, QHeaderView, QGroupBox, QTextEdit, QMenu)
 from PyQt6.QtCore import Qt, QDate
-from PyQt6.QtGui import QDoubleValidator
+from PyQt6.QtGui import QDoubleValidator, QAction
 from decimal import Decimal
 from database import Database
 from utils.logger import app_logger
@@ -29,6 +29,7 @@ class MaintenanceDialog(QDialog):
             self.setWindowTitle("Добавить обслуживание")
         
         self.setModal(True)
+        self.setMinimumWidth(500)
         layout = QVBoxLayout()
         self.setLayout(layout)
         
@@ -161,7 +162,7 @@ class MaintenanceWidget(QWidget):
         filter_layout.addWidget(QLabel("Оборудование:"))
         self.equipment_filter = QComboBox()
         self.equipment_filter.addItem("Все", None)
-        self.equipment_filter.currentIndexChanged.connect(self.refresh_data)
+        self.equipment_filter.currentIndexChanged.connect(self.on_equipment_filter_changed)
         filter_layout.addWidget(self.equipment_filter)
         
         filter_layout.addStretch()
@@ -204,11 +205,15 @@ class MaintenanceWidget(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.table)
     
     def refresh_equipment_list(self):
         """Обновить список оборудования в фильтре"""
         current_id = self.equipment_filter.currentData()
+        # Отключаем сигнал, чтобы избежать рекурсии
+        self.equipment_filter.blockSignals(True)
         self.equipment_filter.clear()
         self.equipment_filter.addItem("Все", None)
         
@@ -225,6 +230,13 @@ class MaintenanceWidget(QWidget):
                 if self.equipment_filter.itemData(i) == current_id:
                     self.equipment_filter.setCurrentIndex(i)
                     break
+        
+        # Включаем сигнал обратно
+        self.equipment_filter.blockSignals(False)
+    
+    def on_equipment_filter_changed(self):
+        """Обработчик изменения фильтра оборудования"""
+        self.refresh_data()
     
     def refresh_data(self):
         """Обновить данные в таблице"""
@@ -259,8 +271,18 @@ class MaintenanceWidget(QWidget):
             self.table.setItem(row, 1, QTableWidgetItem(equipment_text))
             self.table.setItem(row, 2, QTableWidgetItem(maintenance['maintenance_date']))
             self.table.setItem(row, 3, QTableWidgetItem(maintenance['type']))
+            
+            # Форматирование цены
             cost = maintenance.get('cost', '0') or '0'
-            self.table.setItem(row, 4, QTableWidgetItem(str(cost)))
+            try:
+                cost_decimal = Decimal(str(cost))
+                cost_text = f"{cost_decimal:,.2f} ₽".replace(',', ' ')
+            except:
+                cost_text = f"{cost} ₽" if cost != '0' else "0.00 ₽"
+            cost_item = QTableWidgetItem(cost_text)
+            cost_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.table.setItem(row, 4, cost_item)
+            
             description = maintenance.get('description', '') or ''
             self.table.setItem(row, 5, QTableWidgetItem(description[:50] + '...' if len(description) > 50 else description))
     
@@ -363,3 +385,46 @@ class MaintenanceWidget(QWidget):
             except Exception as e:
                 app_logger.log_error("Удаление обслуживания", str(e), f"ID: {maintenance_id}")
                 QMessageBox.warning(self, "Ошибка", f"Ошибка удаления: {str(e)}")
+    
+    def show_context_menu(self, position):
+        """Показать контекстное меню для таблицы"""
+        if self.table.itemAt(position) is None:
+            return
+        
+        menu = QMenu(self)
+        
+        edit_action = QAction("✏️ Редактировать", self)
+        edit_action.triggered.connect(self.edit_maintenance)
+        menu.addAction(edit_action)
+        
+        delete_action = QAction("🗑️ Удалить", self)
+        delete_action.triggered.connect(self.delete_maintenance)
+        menu.addAction(delete_action)
+        
+        menu.addSeparator()
+        
+        view_action = QAction("📋 Просмотреть полное описание", self)
+        view_action.triggered.connect(self.view_full_description)
+        menu.addAction(view_action)
+        
+        menu.exec(self.table.viewport().mapToGlobal(position))
+    
+    def view_full_description(self):
+        """Просмотр полного описания обслуживания"""
+        current_row = self.table.currentRow()
+        if current_row < 0:
+            return
+        
+        maintenance_id = int(self.table.item(current_row, 0).text())
+        maintenance_data = self.db.get_maintenance_by_id(maintenance_id)
+        
+        if maintenance_data:
+            description = maintenance_data.get('description', '')
+            if description:
+                QMessageBox.information(
+                    self, 
+                    f"Описание обслуживания (ID: {maintenance_id})",
+                    description
+                )
+            else:
+                QMessageBox.information(self, "Описание", "Описание отсутствует")
