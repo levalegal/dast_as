@@ -27,8 +27,8 @@ class MainWindow(QMainWindow):
     
     def init_ui(self):
         """Инициализация пользовательского интерфейса"""
-        self.setWindowTitle("EquipmentTracker - Учет оборудования")
-        self.setGeometry(100, 100, 1200, 800)
+        self.setWindowTitle("EquipmentTracker - Система учета оборудования")
+        self.setGeometry(100, 100, 1400, 900)
         
         # Применяем современные стили
         self.setStyleSheet(ModernStyles.get_main_stylesheet())
@@ -39,10 +39,49 @@ class MainWindow(QMainWindow):
         
         # Главный layout
         main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
         central_widget.setLayout(main_layout)
         
         # Создаем вкладки
         self.tabs = QTabWidget()
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 2px solid #E0E0E0;
+                border-radius: 10px;
+                top: -1px;
+                padding: 4px;
+            }
+            QTabBar::tab {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #FFFFFF,
+                    stop:1 #F5F7FA);
+                color: #757575;
+                padding: 14px 28px;
+                margin-right: 4px;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                border: 2px solid #E0E0E0;
+                border-bottom: none;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            QTabBar::tab:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ECEFF1,
+                    stop:1 #F5F7FA);
+                color: #212121;
+                border-color: #64B5F6;
+            }
+            QTabBar::tab:selected {
+                background: #FFFFFF;
+                color: #2196F3;
+                border: 2px solid #2196F3;
+                border-bottom: 3px solid #FFFFFF;
+                font-weight: 700;
+                margin-bottom: -1px;
+            }
+        """)
         main_layout.addWidget(self.tabs)
         
         # Вкладка "Дашборд"
@@ -51,29 +90,41 @@ class MainWindow(QMainWindow):
         
         # Вкладка "Оборудование"
         self.equipment_widget = EquipmentWidget(self.db)
-        self.tabs.addTab(self.equipment_widget, "Реестр оборудования")
+        self.tabs.addTab(self.equipment_widget, "📦 Реестр оборудования")
         
         # Вкладка "Техническое обслуживание"
         self.maintenance_widget = MaintenanceWidget(self.db)
-        self.tabs.addTab(self.maintenance_widget, "Техническое обслуживание")
+        self.tabs.addTab(self.maintenance_widget, "🔧 Техническое обслуживание")
         
         # Вкладка "Планировщик ТО"
         self.scheduler_widget = MaintenanceSchedulerWidget(self.db)
-        self.tabs.addTab(self.scheduler_widget, "Планировщик ТО")
+        self.tabs.addTab(self.scheduler_widget, "📅 Планировщик ТО")
         
         # Вкладка "Перемещения"
         self.assignments_widget = AssignmentsWidget(self.db)
-        self.tabs.addTab(self.assignments_widget, "История перемещений")
+        self.tabs.addTab(self.assignments_widget, "👥 История перемещений")
         
         # Вкладка "Отчеты"
         self.reports_widget = ReportsWidget(self.db)
-        self.tabs.addTab(self.reports_widget, "Отчеты")
+        self.tabs.addTab(self.reports_widget, "📊 Отчеты")
         
         # Меню
         self.create_menu()
         
-        # Статусная строка
-        self.statusBar().showMessage("Готово к работе")
+        # Статусная строка с улучшенным дизайном
+        self.statusBar().setStyleSheet("""
+            QStatusBar {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #FFFFFF,
+                    stop:1 #F5F7FA);
+                border-top: 2px solid #E0E0E0;
+                color: #212121;
+                font-size: 12px;
+                font-weight: 500;
+                padding: 6px;
+            }
+        """)
+        self.statusBar().showMessage("✅ Готово к работе")
         
         # Подключаем сигналы для обновления данных между вкладками
         self.equipment_widget.equipment_updated.connect(self.on_equipment_updated)
@@ -83,23 +134,26 @@ class MainWindow(QMainWindow):
         """Создать меню приложения"""
         menubar = self.menuBar()
         
-        # Меню "Файл"
-        file_menu = menubar.addMenu("Файл")
+        # Меню "Файл" с улучшенным дизайном
+        file_menu = menubar.addMenu("📁 Файл")
         
         backup_action = QAction("💾 Создать резервную копию", self)
         backup_action.setShortcut("Ctrl+B")
+        backup_action.setToolTip("Создать резервную копию базы данных")
         backup_action.triggered.connect(self.create_backup)
         file_menu.addAction(backup_action)
         
         restore_action = QAction("📂 Восстановить из резервной копии", self)
         restore_action.setShortcut("Ctrl+R")
+        restore_action.setToolTip("Восстановить базу данных из резервной копии")
         restore_action.triggered.connect(self.restore_backup)
         file_menu.addAction(restore_action)
         
         file_menu.addSeparator()
         
-        exit_action = QAction("Выход", self)
+        exit_action = QAction("🚪 Выход", self)
         exit_action.setShortcut("Ctrl+Q")
+        exit_action.setToolTip("Закрыть приложение")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
     
