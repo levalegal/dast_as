@@ -46,6 +46,8 @@ class AssignmentDialog(QDialog):
         
         # Оборудование
         self.equipment_combo = QComboBox()
+        self.equipment_combo.setMinimumHeight(38)
+        self.equipment_combo.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         equipment_list = self.db.get_all_equipment()
         if not equipment_list:
             QMessageBox.warning(self, "Предупреждение", 
@@ -61,17 +63,23 @@ class AssignmentDialog(QDialog):
         # Назначено кому
         self.assigned_to_edit = QLineEdit()
         self.assigned_to_edit.setPlaceholderText("ФИО сотрудника")
+        self.assigned_to_edit.setMinimumHeight(38)
+        self.assigned_to_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         form.addRow("Назначено кому *:", self.assigned_to_edit)
         
         # Отдел
         self.department_edit = QLineEdit()
         self.department_edit.setPlaceholderText("Название отдела")
+        self.department_edit.setMinimumHeight(38)
+        self.department_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         form.addRow("Отдел:", self.department_edit)
         
         # Дата начала
         self.start_date_edit = QDateEdit()
         self.start_date_edit.setCalendarPopup(True)
         self.start_date_edit.setDate(QDate.currentDate())
+        self.start_date_edit.setMinimumHeight(38)
+        self.start_date_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         form.addRow("Дата начала *:", self.start_date_edit)
         
         # Дата окончания
@@ -79,20 +87,35 @@ class AssignmentDialog(QDialog):
         self.end_date_edit.setCalendarPopup(True)
         self.end_date_edit.setDate(QDate())
         self.end_date_edit.setSpecialValueText("Текущее назначение")
+        self.end_date_edit.setMinimumHeight(38)
+        self.end_date_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         form.addRow("Дата окончания:", self.end_date_edit)
         
         layout.addLayout(form)
         
-        # Кнопки
-        buttons_layout = QHBoxLayout()
-        self.save_btn = QPushButton("Сохранить")
-        self.cancel_btn = QPushButton("Отмена")
-        buttons_layout.addWidget(self.save_btn)
-        buttons_layout.addWidget(self.cancel_btn)
-        layout.addLayout(buttons_layout)
+        layout.addStretch()
         
-        self.save_btn.clicked.connect(self.accept)
+        # Кнопки с улучшенным дизайном
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch()
+        
+        self.cancel_btn = QPushButton("❌ Отмена")
+        self.cancel_btn.setProperty("class", "secondary-button")
+        self.cancel_btn.setMinimumWidth(140)
+        self.cancel_btn.setMinimumHeight(42)
+        self.cancel_btn.setStyleSheet("font-size: 14px; font-weight: 600; padding: 10px 24px;")
         self.cancel_btn.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.cancel_btn)
+        
+        self.save_btn = QPushButton("✅ Сохранить")
+        self.save_btn.setProperty("class", "action-button")
+        self.save_btn.setMinimumWidth(140)
+        self.save_btn.setMinimumHeight(42)
+        self.save_btn.setStyleSheet("font-size: 14px; font-weight: 600; padding: 10px 24px;")
+        self.save_btn.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.save_btn)
+        
+        layout.addLayout(buttons_layout)
         
         # Заполняем данные, если редактируем
         if self.assignment_data:

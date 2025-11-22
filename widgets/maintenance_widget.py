@@ -47,6 +47,8 @@ class MaintenanceDialog(QDialog):
         
         # Оборудование
         self.equipment_combo = QComboBox()
+        self.equipment_combo.setMinimumHeight(38)
+        self.equipment_combo.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         equipment_list = self.db.get_all_equipment()
         if not equipment_list:
             QMessageBox.warning(self, "Предупреждение", 
@@ -63,11 +65,15 @@ class MaintenanceDialog(QDialog):
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDate(QDate.currentDate())
+        self.date_edit.setMinimumHeight(38)
+        self.date_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         form.addRow("Дата обслуживания *:", self.date_edit)
         
         # Тип обслуживания
         self.type_combo = QComboBox()
         self.type_combo.setEditable(True)
+        self.type_combo.setMinimumHeight(38)
+        self.type_combo.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         self.type_combo.addItems([
             "Плановое ТО",
             "Внеплановое ТО",
@@ -82,27 +88,43 @@ class MaintenanceDialog(QDialog):
         # Стоимость
         self.cost_edit = QLineEdit()
         self.cost_edit.setPlaceholderText("0.00")
+        self.cost_edit.setMinimumHeight(38)
+        self.cost_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         validator = QDoubleValidator(0, 999999999, 2)
         self.cost_edit.setValidator(validator)
         form.addRow("Стоимость:", self.cost_edit)
         
         # Описание
         self.description_edit = QTextEdit()
-        self.description_edit.setMaximumHeight(100)
+        self.description_edit.setMinimumHeight(120)
+        self.description_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         form.addRow("Описание:", self.description_edit)
         
         layout.addLayout(form)
         
-        # Кнопки
-        buttons_layout = QHBoxLayout()
-        self.save_btn = QPushButton("Сохранить")
-        self.cancel_btn = QPushButton("Отмена")
-        buttons_layout.addWidget(self.save_btn)
-        buttons_layout.addWidget(self.cancel_btn)
-        layout.addLayout(buttons_layout)
+        layout.addStretch()
         
-        self.save_btn.clicked.connect(self.accept)
+        # Кнопки с улучшенным дизайном
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch()
+        
+        self.cancel_btn = QPushButton("❌ Отмена")
+        self.cancel_btn.setProperty("class", "secondary-button")
+        self.cancel_btn.setMinimumWidth(140)
+        self.cancel_btn.setMinimumHeight(42)
+        self.cancel_btn.setStyleSheet("font-size: 14px; font-weight: 600; padding: 10px 24px;")
         self.cancel_btn.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.cancel_btn)
+        
+        self.save_btn = QPushButton("✅ Сохранить")
+        self.save_btn.setProperty("class", "action-button")
+        self.save_btn.setMinimumWidth(140)
+        self.save_btn.setMinimumHeight(42)
+        self.save_btn.setStyleSheet("font-size: 14px; font-weight: 600; padding: 10px 24px;")
+        self.save_btn.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.save_btn)
+        
+        layout.addLayout(buttons_layout)
         
         # Заполняем данные, если редактируем
         if self.maintenance_data:
