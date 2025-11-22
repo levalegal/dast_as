@@ -31,41 +31,46 @@ class EquipmentDialog(QDialog):
             self.setWindowTitle("➕ Добавить оборудование")
         
         self.setModal(True)
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(500)
+        self.setMinimumWidth(700)
+        self.setMinimumHeight(600)
+        self.resize(750, 650)
         
         # Применяем стили диалога
         from utils.styles import ModernStyles
         self.setStyleSheet(ModernStyles.get_dialog_stylesheet())
         
         layout = QVBoxLayout()
-        layout.setSpacing(20)
-        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(24)
+        layout.setContentsMargins(28, 28, 28, 28)
         self.setLayout(layout)
         
         # Заголовок
         title_label = QLabel(self.windowTitle())
         title_label.setProperty("class", "title")
-        title_label.setStyleSheet("font-size: 20px; font-weight: 700; color: #2196F3; padding: 8px 0px;")
+        title_label.setStyleSheet("font-size: 22px; font-weight: 700; color: #2196F3; padding: 12px 0px; margin-bottom: 8px;")
         layout.addWidget(title_label)
         
         # Основная информация
         main_group = QGroupBox("📋 Основная информация")
         main_layout = QFormLayout()
-        main_layout.setSpacing(16)
-        main_layout.setContentsMargins(16, 24, 16, 16)
+        main_layout.setSpacing(18)
+        main_layout.setContentsMargins(20, 28, 20, 20)
         main_group.setLayout(main_layout)
         
         # Инвентарный номер
         self.inventory_number_edit = QLineEdit()
         self.inventory_number_edit.setPlaceholderText("ИНВ-001")
         self.inventory_number_edit.setToolTip("Уникальный инвентарный номер оборудования")
+        self.inventory_number_edit.setMinimumHeight(38)
+        self.inventory_number_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         main_layout.addRow("Инвентарный номер *:", self.inventory_number_edit)
         
         # Наименование
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("Название оборудования")
         self.name_edit.setToolTip("Полное наименование оборудования")
+        self.name_edit.setMinimumHeight(38)
+        self.name_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         main_layout.addRow("Наименование *:", self.name_edit)
         
         # Категория
@@ -79,6 +84,8 @@ class EquipmentDialog(QDialog):
             "Транспорт",
             "Другое"
         ])
+        self.category_combo.setMinimumHeight(38)
+        self.category_combo.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         main_layout.addRow("Категория:", self.category_combo)
         
         layout.addWidget(main_group)
@@ -86,20 +93,24 @@ class EquipmentDialog(QDialog):
         # Финансовая информация
         finance_group = QGroupBox("💰 Финансовая информация")
         finance_layout = QFormLayout()
-        finance_layout.setSpacing(16)
-        finance_layout.setContentsMargins(16, 24, 16, 16)
+        finance_layout.setSpacing(18)
+        finance_layout.setContentsMargins(20, 28, 20, 20)
         finance_group.setLayout(finance_layout)
         
         # Дата покупки
         self.purchase_date_edit = QDateEdit()
         self.purchase_date_edit.setCalendarPopup(True)
         self.purchase_date_edit.setDate(QDate.currentDate())
+        self.purchase_date_edit.setMinimumHeight(38)
+        self.purchase_date_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         finance_layout.addRow("Дата покупки:", self.purchase_date_edit)
         
         # Цена покупки
         self.purchase_price_edit = QLineEdit()
         self.purchase_price_edit.setPlaceholderText("0.00")
         self.purchase_price_edit.setToolTip("Стоимость покупки оборудования в рублях")
+        self.purchase_price_edit.setMinimumHeight(38)
+        self.purchase_price_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         validator = QDoubleValidator(0, 999999999, 2)
         self.purchase_price_edit.setValidator(validator)
         finance_layout.addRow("Цена покупки (₽):", self.purchase_price_edit)
@@ -109,13 +120,15 @@ class EquipmentDialog(QDialog):
         # Дополнительная информация
         extra_group = QGroupBox("📍 Дополнительная информация")
         extra_layout = QFormLayout()
-        extra_layout.setSpacing(16)
-        extra_layout.setContentsMargins(16, 24, 16, 16)
+        extra_layout.setSpacing(18)
+        extra_layout.setContentsMargins(20, 28, 20, 20)
         extra_group.setLayout(extra_layout)
         
         # Текущее местоположение
         self.location_edit = QLineEdit()
         self.location_edit.setPlaceholderText("Отдел/Сотрудник")
+        self.location_edit.setMinimumHeight(38)
+        self.location_edit.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         extra_layout.addRow("Текущее местоположение:", self.location_edit)
         
         # Статус с русскими названиями
@@ -128,6 +141,8 @@ class EquipmentDialog(QDialog):
         }
         for ru_name, en_value in status_map.items():
             self.status_combo.addItem(ru_name, en_value)
+        self.status_combo.setMinimumHeight(38)
+        self.status_combo.setStyleSheet("font-size: 14px; padding: 10px 14px;")
         extra_layout.addRow("Статус:", self.status_combo)
         
         layout.addWidget(extra_group)
@@ -140,13 +155,17 @@ class EquipmentDialog(QDialog):
         
         self.cancel_btn = QPushButton("❌ Отмена")
         self.cancel_btn.setProperty("class", "secondary-button")
-        self.cancel_btn.setMinimumWidth(120)
+        self.cancel_btn.setMinimumWidth(140)
+        self.cancel_btn.setMinimumHeight(42)
+        self.cancel_btn.setStyleSheet("font-size: 14px; font-weight: 600; padding: 10px 24px;")
         self.cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(self.cancel_btn)
         
         self.save_btn = QPushButton("✅ Сохранить")
         self.save_btn.setProperty("class", "action-button")
-        self.save_btn.setMinimumWidth(120)
+        self.save_btn.setMinimumWidth(140)
+        self.save_btn.setMinimumHeight(42)
+        self.save_btn.setStyleSheet("font-size: 14px; font-weight: 600; padding: 10px 24px;")
         self.save_btn.clicked.connect(self.accept)
         buttons_layout.addWidget(self.save_btn)
         
@@ -331,10 +350,15 @@ class EquipmentWidget(QWidget):
         
         # Восстанавливаем выбор категории
         if current_category:
+            # Отключаем сигнал, чтобы избежать рекурсии
+            self.category_filter.blockSignals(True)
+            self.status_filter.blockSignals(True)
             for i in range(self.category_filter.count()):
                 if self.category_filter.itemData(i) == current_category:
                     self.category_filter.setCurrentIndex(i)
                     break
+            self.category_filter.blockSignals(False)
+            self.status_filter.blockSignals(False)
         
         self.apply_filters()
         self.equipment_updated.emit()

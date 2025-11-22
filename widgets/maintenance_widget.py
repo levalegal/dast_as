@@ -29,11 +29,21 @@ class MaintenanceDialog(QDialog):
             self.setWindowTitle("Добавить обслуживание")
         
         self.setModal(True)
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(500)
+        self.resize(650, 550)
+        
+        # Применяем стили диалога
+        from utils.styles import ModernStyles
+        self.setStyleSheet(ModernStyles.get_dialog_stylesheet())
+        
         layout = QVBoxLayout()
+        layout.setSpacing(20)
+        layout.setContentsMargins(24, 24, 24, 24)
         self.setLayout(layout)
         
         form = QFormLayout()
+        form.setSpacing(16)
         
         # Оборудование
         self.equipment_combo = QComboBox()
