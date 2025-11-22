@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QDialog, QFormLayout, QDateEdit, QComboBox,
                              QMessageBox, QHeaderView, QGroupBox, QMenu)
 from PyQt6.QtCore import Qt, QDate, pyqtSignal
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QColor, QFont
 from PyQt6.QtGui import QDoubleValidator
 from decimal import Decimal
 from datetime import datetime
@@ -26,27 +26,47 @@ class EquipmentDialog(QDialog):
     def init_ui(self):
         """Инициализация интерфейса диалога"""
         if self.equipment_data:
-            self.setWindowTitle("Редактировать оборудование")
+            self.setWindowTitle("✏️ Редактировать оборудование")
         else:
-            self.setWindowTitle("Добавить оборудование")
+            self.setWindowTitle("➕ Добавить оборудование")
         
         self.setModal(True)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(500)
+        
+        # Применяем стили диалога
+        from utils.styles import ModernStyles
+        self.setStyleSheet(ModernStyles.get_dialog_stylesheet())
+        
         layout = QVBoxLayout()
+        layout.setSpacing(20)
+        layout.setContentsMargins(24, 24, 24, 24)
         self.setLayout(layout)
         
-        form = QFormLayout()
+        # Заголовок
+        title_label = QLabel(self.windowTitle())
+        title_label.setProperty("class", "title")
+        title_label.setStyleSheet("font-size: 20px; font-weight: 700; color: #2196F3; padding: 8px 0px;")
+        layout.addWidget(title_label)
+        
+        # Основная информация
+        main_group = QGroupBox("📋 Основная информация")
+        main_layout = QFormLayout()
+        main_layout.setSpacing(16)
+        main_layout.setContentsMargins(16, 24, 16, 16)
+        main_group.setLayout(main_layout)
         
         # Инвентарный номер
         self.inventory_number_edit = QLineEdit()
         self.inventory_number_edit.setPlaceholderText("ИНВ-001")
         self.inventory_number_edit.setToolTip("Уникальный инвентарный номер оборудования")
-        form.addRow("Инвентарный номер *:", self.inventory_number_edit)
+        main_layout.addRow("Инвентарный номер *:", self.inventory_number_edit)
         
         # Наименование
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("Название оборудования")
         self.name_edit.setToolTip("Полное наименование оборудования")
-        form.addRow("Наименование *:", self.name_edit)
+        main_layout.addRow("Наименование *:", self.name_edit)
         
         # Категория
         self.category_combo = QComboBox()
@@ -59,13 +79,22 @@ class EquipmentDialog(QDialog):
             "Транспорт",
             "Другое"
         ])
-        form.addRow("Категория:", self.category_combo)
+        main_layout.addRow("Категория:", self.category_combo)
+        
+        layout.addWidget(main_group)
+        
+        # Финансовая информация
+        finance_group = QGroupBox("💰 Финансовая информация")
+        finance_layout = QFormLayout()
+        finance_layout.setSpacing(16)
+        finance_layout.setContentsMargins(16, 24, 16, 16)
+        finance_group.setLayout(finance_layout)
         
         # Дата покупки
         self.purchase_date_edit = QDateEdit()
         self.purchase_date_edit.setCalendarPopup(True)
         self.purchase_date_edit.setDate(QDate.currentDate())
-        form.addRow("Дата покупки:", self.purchase_date_edit)
+        finance_layout.addRow("Дата покупки:", self.purchase_date_edit)
         
         # Цена покупки
         self.purchase_price_edit = QLineEdit()
@@ -73,30 +102,55 @@ class EquipmentDialog(QDialog):
         self.purchase_price_edit.setToolTip("Стоимость покупки оборудования в рублях")
         validator = QDoubleValidator(0, 999999999, 2)
         self.purchase_price_edit.setValidator(validator)
-        form.addRow("Цена покупки:", self.purchase_price_edit)
+        finance_layout.addRow("Цена покупки (₽):", self.purchase_price_edit)
+        
+        layout.addWidget(finance_group)
+        
+        # Дополнительная информация
+        extra_group = QGroupBox("📍 Дополнительная информация")
+        extra_layout = QFormLayout()
+        extra_layout.setSpacing(16)
+        extra_layout.setContentsMargins(16, 24, 16, 16)
+        extra_group.setLayout(extra_layout)
         
         # Текущее местоположение
         self.location_edit = QLineEdit()
         self.location_edit.setPlaceholderText("Отдел/Сотрудник")
-        form.addRow("Текущее местоположение:", self.location_edit)
+        extra_layout.addRow("Текущее местоположение:", self.location_edit)
         
-        # Статус
+        # Статус с русскими названиями
         self.status_combo = QComboBox()
-        self.status_combo.addItems(["active", "in_repair", "written_off", "reserved"])
-        form.addRow("Статус:", self.status_combo)
+        status_map = {
+            "Активное": "active",
+            "В ремонте": "in_repair",
+            "Списано": "written_off",
+            "Резерв": "reserved"
+        }
+        for ru_name, en_value in status_map.items():
+            self.status_combo.addItem(ru_name, en_value)
+        extra_layout.addRow("Статус:", self.status_combo)
         
-        layout.addLayout(form)
+        layout.addWidget(extra_group)
         
-        # Кнопки
+        layout.addStretch()
+        
+        # Кнопки с улучшенным дизайном
         buttons_layout = QHBoxLayout()
-        self.save_btn = QPushButton("Сохранить")
-        self.cancel_btn = QPushButton("Отмена")
-        buttons_layout.addWidget(self.save_btn)
-        buttons_layout.addWidget(self.cancel_btn)
-        layout.addLayout(buttons_layout)
+        buttons_layout.addStretch()
         
-        self.save_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton("❌ Отмена")
+        self.cancel_btn.setProperty("class", "secondary-button")
+        self.cancel_btn.setMinimumWidth(120)
         self.cancel_btn.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.cancel_btn)
+        
+        self.save_btn = QPushButton("✅ Сохранить")
+        self.save_btn.setProperty("class", "action-button")
+        self.save_btn.setMinimumWidth(120)
+        self.save_btn.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.save_btn)
+        
+        layout.addLayout(buttons_layout)
         
         # Заполняем данные, если редактируем
         if self.equipment_data:
@@ -123,9 +177,11 @@ class EquipmentDialog(QDialog):
             self.location_edit.setText(self.equipment_data.get('current_location', ''))
             
             status = self.equipment_data.get('status', 'active')
-            index = self.status_combo.findText(status)
-            if index >= 0:
-                self.status_combo.setCurrentIndex(index)
+            # Находим индекс по значению (en_value)
+            for i in range(self.status_combo.count()):
+                if self.status_combo.itemData(i) == status:
+                    self.status_combo.setCurrentIndex(i)
+                    break
     
     def get_data(self):
         """Получить данные из формы"""
@@ -136,7 +192,7 @@ class EquipmentDialog(QDialog):
             'purchase_date': self.purchase_date_edit.date().toString(Qt.DateFormat.ISODate),
             'purchase_price': None,
             'current_location': self.location_edit.text().strip() or None,
-            'status': self.status_combo.currentText()
+            'status': self.status_combo.currentData() or 'active'
         }
         
         price_text = self.purchase_price_edit.text().strip()
@@ -334,15 +390,19 @@ class EquipmentWidget(QWidget):
             price_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.table.setItem(row, 5, price_item)
             
-            # Форматирование статуса
+            # Форматирование статуса с цветовой индикацией
             status = equipment['status']
-            status_text = {
-                'active': 'Активное',
-                'in_repair': 'В ремонте',
-                'written_off': 'Списано',
-                'reserved': 'Резерв'
-            }.get(status, status)
-            self.table.setItem(row, 6, QTableWidgetItem(status_text))
+            status_map = {
+                'active': ('Активное', '#4CAF50'),
+                'in_repair': ('В ремонте', '#FF9800'),
+                'written_off': ('Списано', '#9E9E9E'),
+                'reserved': ('Резерв', '#2196F3')
+            }
+            status_text, status_color = status_map.get(status, (status, '#757575'))
+            status_item = QTableWidgetItem(status_text)
+            status_item.setForeground(QColor(status_color))
+            status_item.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+            self.table.setItem(row, 6, status_item)
     
     def search_equipment(self):
         """Поиск оборудования по инвентарному номеру"""
