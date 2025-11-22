@@ -4,8 +4,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QTableWidgetItem, QPushButton, QComboBox, QLabel,
                              QDialog, QFormLayout, QDateEdit, QLineEdit,
-                             QMessageBox, QHeaderView, QGroupBox)
+                             QMessageBox, QHeaderView, QGroupBox, QMenu)
 from PyQt6.QtCore import Qt, QDate, pyqtSignal
+from PyQt6.QtGui import QAction
 from database import Database
 from utils.logger import app_logger
 
@@ -27,6 +28,7 @@ class AssignmentDialog(QDialog):
             self.setWindowTitle("Добавить назначение")
         
         self.setModal(True)
+        self.setMinimumWidth(500)
         layout = QVBoxLayout()
         self.setLayout(layout)
         
@@ -193,6 +195,8 @@ class AssignmentsWidget(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.table)
     
     def refresh_equipment_list(self):
@@ -378,3 +382,26 @@ class AssignmentsWidget(QWidget):
                 history_text += "\n\n"
             
             QMessageBox.information(self, "История назначений", history_text)
+    
+    def show_context_menu(self, position):
+        """Показать контекстное меню для таблицы"""
+        if self.table.itemAt(position) is None:
+            return
+        
+        menu = QMenu(self)
+        
+        edit_action = QAction("✏️ Редактировать", self)
+        edit_action.triggered.connect(self.edit_assignment)
+        menu.addAction(edit_action)
+        
+        delete_action = QAction("🗑️ Удалить", self)
+        delete_action.triggered.connect(self.delete_assignment)
+        menu.addAction(delete_action)
+        
+        menu.addSeparator()
+        
+        view_history_action = QAction("📋 Просмотр истории", self)
+        view_history_action.triggered.connect(self.view_history)
+        menu.addAction(view_history_action)
+        
+        menu.exec(self.table.viewport().mapToGlobal(position))

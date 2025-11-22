@@ -95,9 +95,14 @@ class ReportsWidget(QWidget):
         maintenance_cost_layout.addWidget(filter_group)
         
         # Сводная информация
+        summary_group = QGroupBox("Сводная информация")
+        summary_layout = QVBoxLayout()
         self.summary_label = QLabel()
-        self.summary_label.setStyleSheet("font-size: 14px; font-weight: bold; padding: 10px;")
-        maintenance_cost_layout.addWidget(self.summary_label)
+        self.summary_label.setProperty("class", "stat-label")
+        self.summary_label.setStyleSheet("font-size: 14px; font-weight: 600; padding: 8px; color: #2196F3;")
+        summary_layout.addWidget(self.summary_label)
+        summary_group.setLayout(summary_layout)
+        maintenance_cost_layout.addWidget(summary_group)
         
         self.maintenance_cost_table = QTableWidget()
         self.maintenance_cost_table.setColumnCount(6)
@@ -174,12 +179,30 @@ class ReportsWidget(QWidget):
             self.depreciation_table.setItem(row, 2, QTableWidgetItem(item['name']))
             self.depreciation_table.setItem(row, 3, QTableWidgetItem(item['category'] or ''))
             self.depreciation_table.setItem(row, 4, QTableWidgetItem(item['purchase_date'] or ''))
+            # Форматирование цены покупки
             price = item['purchase_price'] or '0'
-            self.depreciation_table.setItem(row, 5, QTableWidgetItem(str(price)))
+            try:
+                price_decimal = Decimal(str(price))
+                price_text = f"{price_decimal:,.2f} ₽".replace(',', ' ')
+            except:
+                price_text = f"{price} ₽" if price != '0' else "0.00 ₽"
+            price_item = QTableWidgetItem(price_text)
+            price_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.depreciation_table.setItem(row, 5, price_item)
+            
             days = item.get('days_in_use', 0) or 0
             self.depreciation_table.setItem(row, 6, QTableWidgetItem(str(days)))
+            
+            # Форматирование стоимости ТО
             maintenance_cost = item.get('total_maintenance_cost', '0') or '0'
-            self.depreciation_table.setItem(row, 7, QTableWidgetItem(str(maintenance_cost)))
+            try:
+                cost_decimal = Decimal(str(maintenance_cost))
+                cost_text = f"{cost_decimal:,.2f} ₽".replace(',', ' ')
+            except:
+                cost_text = f"{maintenance_cost} ₽" if maintenance_cost != '0' else "0.00 ₽"
+            cost_item = QTableWidgetItem(cost_text)
+            cost_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.depreciation_table.setItem(row, 7, cost_item)
     
     def refresh_maintenance_cost(self):
         """Обновить отчет по стоимости содержания"""
@@ -194,9 +217,9 @@ class ReportsWidget(QWidget):
         total_count = summary.get('total_maintenances', 0) or 0
         
         self.summary_label.setText(
-            f"Всего обслуживаний: {total_count} | "
-            f"Общая стоимость: {total_cost:.2f} | "
-            f"Средняя стоимость: {avg_cost:.2f}"
+            f"📊 Всего обслуживаний: <b>{total_count}</b> | "
+            f"💰 Общая стоимость: <b>{total_cost:,.2f} ₽</b> | "
+            f"📈 Средняя стоимость: <b>{avg_cost:,.2f} ₽</b>".replace(',', ' ')
         )
         
         # Получаем детальный отчет
@@ -209,8 +232,17 @@ class ReportsWidget(QWidget):
             self.maintenance_cost_table.setItem(row, 1, QTableWidgetItem(equipment_text))
             self.maintenance_cost_table.setItem(row, 2, QTableWidgetItem(item['maintenance_date']))
             self.maintenance_cost_table.setItem(row, 3, QTableWidgetItem(item['type']))
+            
+            # Форматирование стоимости
             cost = item.get('cost', '0') or '0'
-            self.maintenance_cost_table.setItem(row, 4, QTableWidgetItem(str(cost)))
+            try:
+                cost_decimal = Decimal(str(cost))
+                cost_text = f"{cost_decimal:,.2f} ₽".replace(',', ' ')
+            except:
+                cost_text = f"{cost} ₽" if cost != '0' else "0.00 ₽"
+            cost_item = QTableWidgetItem(cost_text)
+            cost_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.maintenance_cost_table.setItem(row, 4, cost_item)
             description = item.get('description', '') or ''
             self.maintenance_cost_table.setItem(row, 5, QTableWidgetItem(description[:50] + '...' if len(description) > 50 else description))
     
@@ -228,8 +260,17 @@ class ReportsWidget(QWidget):
             self.maintenance_report_table.setItem(row, 1, QTableWidgetItem(equipment_text))
             self.maintenance_report_table.setItem(row, 2, QTableWidgetItem(item['maintenance_date']))
             self.maintenance_report_table.setItem(row, 3, QTableWidgetItem(item['type']))
+            
+            # Форматирование стоимости
             cost = item.get('cost', '0') or '0'
-            self.maintenance_report_table.setItem(row, 4, QTableWidgetItem(str(cost)))
+            try:
+                cost_decimal = Decimal(str(cost))
+                cost_text = f"{cost_decimal:,.2f} ₽".replace(',', ' ')
+            except:
+                cost_text = f"{cost} ₽" if cost != '0' else "0.00 ₽"
+            cost_item = QTableWidgetItem(cost_text)
+            cost_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.maintenance_report_table.setItem(row, 4, cost_item)
             description = item.get('description', '') or ''
             self.maintenance_report_table.setItem(row, 5, QTableWidgetItem(description[:50] + '...' if len(description) > 50 else description))
     
