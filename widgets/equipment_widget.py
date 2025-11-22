@@ -31,16 +31,16 @@ class EquipmentDialog(QDialog):
             self.setWindowTitle("➕ Добавить оборудование")
         
         self.setModal(True)
-        self.setMinimumWidth(700)
-        self.setMinimumHeight(600)
-        self.resize(750, 650)
+        self.setMinimumWidth(750)
+        self.setMinimumHeight(750)
+        self.resize(800, 800)
         
         # Применяем стили диалога
         from utils.styles import ModernStyles
         self.setStyleSheet(ModernStyles.get_dialog_stylesheet())
         
         layout = QVBoxLayout()
-        layout.setSpacing(24)
+        layout.setSpacing(20)
         layout.setContentsMargins(28, 28, 28, 28)
         self.setLayout(layout)
         
@@ -53,8 +53,9 @@ class EquipmentDialog(QDialog):
         # Основная информация
         main_group = QGroupBox("📋 Основная информация")
         main_layout = QFormLayout()
-        main_layout.setSpacing(18)
+        main_layout.setSpacing(14)
         main_layout.setContentsMargins(20, 28, 20, 20)
+        main_layout.setVerticalSpacing(14)
         main_group.setLayout(main_layout)
         
         # Инвентарный номер
@@ -93,8 +94,9 @@ class EquipmentDialog(QDialog):
         # Финансовая информация
         finance_group = QGroupBox("💰 Финансовая информация")
         finance_layout = QFormLayout()
-        finance_layout.setSpacing(18)
+        finance_layout.setSpacing(14)
         finance_layout.setContentsMargins(20, 28, 20, 20)
+        finance_layout.setVerticalSpacing(14)
         finance_group.setLayout(finance_layout)
         
         # Дата покупки
@@ -120,8 +122,9 @@ class EquipmentDialog(QDialog):
         # Дополнительная информация
         extra_group = QGroupBox("📍 Дополнительная информация")
         extra_layout = QFormLayout()
-        extra_layout.setSpacing(18)
+        extra_layout.setSpacing(14)
         extra_layout.setContentsMargins(20, 28, 20, 20)
+        extra_layout.setVerticalSpacing(14)
         extra_group.setLayout(extra_layout)
         
         # Текущее местоположение
